@@ -20,11 +20,17 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@metamask/eth-sig-util": "^7.0.0",
+    "@nestjs/axios": "^3.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
+    "axios": "^1.5.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rlp": "^3.0.0",
+    "rxjs": "^7.8.1",
+    "web3": "^4.1.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
