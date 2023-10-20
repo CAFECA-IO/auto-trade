@@ -19,8 +19,10 @@ describe('PriceTickerService', () => {
   });
 
   it('should return an array of price tickers', async () => {
-    const result = await service.getCFDQuotation();
-    console.log(result['data']['price']);
+    const result1 = await service.getCFDQuotation('SELL');
+    console.log(result1);
+    const result2 = await service.getCFDQuotation('BUY');
+    console.log(result2);
     // result.subscribe((val) => console.log(val));
   });
 });

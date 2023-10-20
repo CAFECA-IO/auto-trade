@@ -1,4 +1,4 @@
-export class DepositDto {
+export class CreateDepositDto {
   blockchain: string;
   txhash: string;
   targetAsset: string;

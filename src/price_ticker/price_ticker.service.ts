@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { PriceTicker } from './entities/price_ticker.entity';
 import { Observable, firstValueFrom, map } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { Quotation } from './entities/quotation.entity';
 
 @Injectable()
 export class PriceTickerService {
@@ -17,10 +18,15 @@ export class PriceTickerService {
   // return res;
 
   // }
-  async getCFDQuotation(): Promise<PriceTicker[]> {
+  async getCFDQuotation(typeOfPosition: string): Promise<Quotation> {
     const { data } = await firstValueFrom(
-      this.httpService.get<PriceTicker[]>(
-        'https://api.tidebit-defi.com/market/qutation/ETH-USDT',
+      this.httpService.get<Quotation>(
+        'https://api.tidebit-defi.com/api/v1/market/quotation/ETH-USDT',
+        {
+          params: {
+            typeOfPosition: typeOfPosition,
+          },
+        },
       ),
     );
     return data;
