@@ -21,9 +21,9 @@ describe('DewtService', () => {
 
   it('should return a dewt', () => {
     const createDewtDto = new CreateDewtDto();
-    createDewtDto.address = '0x62CA3acE6EE83aa87fCAF11c20E72C7175DAA164';
+    createDewtDto.address = '0xC76D6C61dfa7DBb7700Ad3ED390E5eaf98337A74';
     createDewtDto.privatekey =
-      '54405e07a12ece2ff6abcf56b955343b671ba2913bae5474433ee03aa5b912d9';
+      '496d0910854c0140df89ed3271084a93ffe9b91bbe8b05c36ee74e646bd02f38';
     const dewt = service.create(createDewtDto);
     console.log(dewt);
   });

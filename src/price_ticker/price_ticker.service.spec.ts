@@ -14,15 +14,9 @@ describe('PriceTickerService', () => {
     service = module.get<PriceTickerService>(PriceTickerService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
-
-  it('should return an array of price tickers', async () => {
-    const result1 = await service.getCFDQuotation('SELL');
-    console.log(result1);
-    const result2 = await service.getCFDQuotation('BUY');
-    console.log(result2);
-    // result.subscribe((val) => console.log(val));
+  it('should return an array of price tickers by findall', async () => {
+    const res = await service.getCFDQuotation('SELL');
+    console.log(res);
+    expect(res).toBeDefined();
   });
 });

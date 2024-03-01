@@ -1,11 +1,11 @@
-import ServiceTerm from '../constants/contracts/service_term';
+import ServiceTerm from '../common/constants/contracts/service_term';
 import {
   DeWT_VALIDITY_PERIOD,
   DOMAIN,
   PRIVATE_POLICY,
   SERVICE_TERM_TITLE,
   TERM_OF_SERVICE,
-} from '../constants/config';
+} from '../common/constants/config';
 import RLP from 'rlp';
 
 export const getTimestamp = () => Math.ceil(Date.now() / 1000);

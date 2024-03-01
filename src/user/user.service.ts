@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { myAsset } from './entities/myAsset.entity';
+import { HistoryList } from './entities/history.entity';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  private readonly TBDBackendUrl: string;
+  constructor(private readonly httpService: HttpService) {
+    this.TBDBackendUrl = 'https://api.tidebit-defi.com/api/v1/';
   }
 
   findAll() {
@@ -16,11 +19,46 @@ export class UserService {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
   remove(id: number) {
     return `This action removes a #${id} user`;
   }
+  async getMyAsset(dewt: string): Promise<myAsset> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<myAsset>(this.TBDBackendUrl + 'users/assets', {
+        headers: {
+          'Content-Type': 'application/json',
+          Dewt: dewt,
+        },
+      }),
+    );
+    return data;
+  }
+  async listHistories(dewt: string, limit: string = '3'): Promise<HistoryList> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<HistoryList>(
+        this.TBDBackendUrl + 'bolt-transactions/history?limit=' + limit,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
+  }
+  async listCFDs(dewt: string): Promise<any> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<any>(this.TBDBackendUrl + 'cfds', {
+        headers: {
+          'Content-Type': 'application/json',
+          Dewt: dewt,
+        },
+      }),
+    );
+    return data;
+  }
+  async getCFDTrade(dewt: string, id: string): Promise<any> {}
+  async listBalances(dewt: string): Promise<any> {}
+  async getPNL(dewt: string): Promise<any> {}
 }
