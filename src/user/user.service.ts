@@ -10,18 +10,6 @@ export class UserService {
   constructor(private readonly httpService: HttpService) {
     this.TBDBackendUrl = 'https://api.tidebit-defi.com/api/v1/';
   }
-
-  findAll() {
-    return `This action returns all user`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
   async getMyAsset(dewt: string): Promise<myAsset> {
     const { data } = await firstValueFrom(
       this.httpService.get<myAsset>(this.TBDBackendUrl + 'users/assets', {
@@ -58,7 +46,6 @@ export class UserService {
     );
     return data;
   }
-  async getCFDTrade(dewt: string, id: string): Promise<any> {}
   async listBalances(dewt: string): Promise<any> {}
   async getPNL(dewt: string): Promise<any> {}
 }

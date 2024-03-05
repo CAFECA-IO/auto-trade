@@ -36,7 +36,7 @@ export class TransactionService {
     console.log(data);
     return data;
   }
-
+  async getCFDTrade(dewt: string, id: string): Promise<any> {}
   async createCFDOrder( // typeOfPosition: string,
   // dewt: string,
   // createDepositDto: CreateDepositDto,

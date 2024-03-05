@@ -29,12 +29,6 @@ describe('TransactionService', () => {
     console.log(deposit);
     // expect(service).toBeDefined();
   });
-  it('should get my asset', async () => {
-    const DEWT =
-      'f8848b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a74847b568b808465e16180.13e8aa7e968c61a88c7c3fb00e0d5fffd51bf3ad06bbcef3d1b2555c3260ab432435443693de13563e20d2f9cdbc38f6f90ca0f42542ae223ff6126abcf835071b.18d4180e41b34c27f5785a07c7607dc3a6e14ad89d7493a802ad4d3714ef02b96111f3c2b8b6083226b25d30d12f24d1170178bc677b422c128c8f541c6f52451c';
-    const myAsset = await service.getMyAsset(DEWT);
-    console.log(myAsset);
-  });
   // it('should create CFD order', () => {
   //   const createDepositDto = new CreateDepositDto();
   //   const DEWT =
