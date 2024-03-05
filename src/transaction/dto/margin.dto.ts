@@ -1,4 +1,4 @@
 export class MarginDto {
   asset: string;
-  amount: string;
+  amount: number;
 }

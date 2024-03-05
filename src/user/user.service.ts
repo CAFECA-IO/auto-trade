@@ -46,6 +46,16 @@ export class UserService {
     );
     return data;
   }
-  async listBalances(dewt: string): Promise<any> {}
+  // async listBalances(dewt: string): Promise<any> {
+  //   const { data } = await firstValueFrom(
+  //     this.httpService.get<any>(this.TBDBackendUrl + 'cfds', {
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Dewt: dewt,
+  //       },
+  //     }),
+  //   );
+  //   return data;
+  // }
   async getPNL(dewt: string): Promise<any> {}
 }

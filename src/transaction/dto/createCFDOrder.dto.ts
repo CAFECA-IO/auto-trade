@@ -3,18 +3,18 @@ import { MarginDto } from './margin.dto';
 
 export class CreateCFDOrderDTO {
   instId: string;
-  quotation: QuotationDto;
+  quotation: QuotationDto['data'];
   typeOfPosition: string; //BUY or SELL
-  price: string;
+  price: number;
   amount: string;
   targetAsset: string;
   unitAsset: string;
   margin: MarginDto;
-  leverage: number; // 5
-  liquidationPrice: string;
-  liquidationTime: number;
+  leverage: number; // 5 maybe can change
+  liquidationPrice: number; // price * (1 - LIQUIDATION_FIVE_LEVERAGE)
+  liquidationTime: number; // getTimestamp() + 86400
   guaranteedStop: boolean; // false
-  fee: string; // 0
+  fee: number; // 0
   guaranteedStopFee?: string;
   createTimestamp?: number;
   takeProfit?: string;

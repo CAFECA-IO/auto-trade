@@ -16,7 +16,7 @@ describe('PriceTickerService', () => {
 
   it('should return an array of price tickers by findall', async () => {
     const res = await service.getCFDQuotation('SELL');
-    console.log(res);
+    await console.log(res);
     expect(res).toBeDefined();
   });
 });

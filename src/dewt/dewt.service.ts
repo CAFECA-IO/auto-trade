@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 // import { CreateDewtDto } from './dto/create-dewt.dto';
 // import { UpdateDewtDto } from './dto/update-dewt.dto';
-import { getServiceTermContract, rlpEncodeServiceTerm } from '../lib/common';
+import { getServiceTermContract, rlpEncodeServiceTerm } from '../common/common';
 import { signTypedData, SignTypedDataVersion } from '@metamask/eth-sig-util';
 import { CreateDewtDto } from './dto/create-dewt.dto';
 // import Web3 from 'web3';

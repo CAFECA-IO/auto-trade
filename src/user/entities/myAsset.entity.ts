@@ -3,7 +3,7 @@ export class myAsset {
   code: string;
   data: {
     currency: string;
-    balance: { available: string; locked: string };
+    balance: { available: string; locked: number };
     pnl: {
       today: {
         amount: { type: string; value: string };
