@@ -10,6 +10,7 @@ import { UserModule } from '../user/user.module';
 import { UserService } from '../user/user.service';
 import { getTimestamp } from '../common/common';
 import { SafeMath } from '../common/safe_math';
+import { QuotationDto } from 'src/price_ticker/dto/quotation.dto';
 
 describe('TransactionService', () => {
   let transactionService: TransactionService;
@@ -44,38 +45,46 @@ describe('TransactionService', () => {
     // expect(service).toBeDefined();
   });
   it('should create CFD order', async () => {
-    const createCFDOrderDto = new CreateCFDOrderDTO();
-    // const typeOfPosition = 'SELL';
-    // const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
-    // const myAsset = await userService.getMyAsset(DEWT);
-    // console.log(quotation);
-    // createCFDOrderDto.instId = quotation.data.instId;
-    // createCFDOrderDto.quotation = quotation.data;
-    // createCFDOrderDto.typeOfPosition = typeOfPosition;
-    // createCFDOrderDto.price = quotation.data.price;
-    // createCFDOrderDto.amount = '10';
-    // createCFDOrderDto.targetAsset = quotation.data.targetAsset;
-    // createCFDOrderDto.unitAsset = quotation.data.unitAsset;
-    createCFDOrderDto.margin = {
-      // asset: myAsset.data.currency,
-      // amount: SafeMath.toSmallestUnit(myAsset.data.balance.locked, 10),
-      asset: 'USDT',
-      amount: 500,
-    };
-    createCFDOrderDto.leverage = 5;
-    // createCFDOrderDto.liquidationPrice = SafeMath.toSmallestUnit(
-    //   quotation.data.price,
-    //   10,
-    // );
-    createCFDOrderDto.liquidationTime = getTimestamp() + 86400;
-    createCFDOrderDto.guaranteedStop = false;
-    createCFDOrderDto.fee = 0;
-    console.log(createCFDOrderDto);
+    const typeOfPosition = 'SELL';
+    // should fake a quotation
+    const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
+    const amount = 0.03;
     const createCFDTrade = await transactionService.createCFDOrder(
-      privateKey,
       DEWT,
-      createCFDOrderDto,
+      privateKey,
+      quotation,
+      amount,
     );
     console.log(createCFDTrade);
+  });
+
+  it('should close CFD order', async () => {
+    // should fake a quotation
+    // const typeOfPosition = 'SELL';
+    // const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
+    const closeCFDOrder = await transactionService.closeCFDOrder(
+      DEWT,
+      privateKey,
+    );
+    console.log(closeCFDOrder);
+  });
+
+
+  it('should be defined', () => {
+    const object = {
+      a: 1,
+      b: 2,
+      c: '3',
+      d: Object,
+      e: 6,
+    };
+    for (const prop in object) {
+      if (typeof object[prop] === 'number') {
+        // console.log(object[prop]);
+        console.log(prop);
+        const newprop = SafeMath.toSmallestUnit(object[prop], 10);
+        console.log(newprop);
+      }
+    }
   });
 });

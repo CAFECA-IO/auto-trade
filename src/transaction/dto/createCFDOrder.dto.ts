@@ -15,8 +15,8 @@ export class CreateCFDOrderDTO {
   liquidationTime: number; // getTimestamp() + 86400
   guaranteedStop: boolean; // false
   fee: number; // 0
+  createTimestamp: number;
   guaranteedStopFee?: string;
-  createTimestamp?: number;
   takeProfit?: string;
   stopLoss?: string;
   outerFee?: string;
