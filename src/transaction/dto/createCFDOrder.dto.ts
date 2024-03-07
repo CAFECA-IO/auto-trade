@@ -6,7 +6,7 @@ export class CreateCFDOrderDTO {
   quotation: QuotationDto['data'];
   typeOfPosition: string; //BUY or SELL
   price: number;
-  amount: string;
+  amount: number;
   targetAsset: string;
   unitAsset: string;
   margin: MarginDto;
