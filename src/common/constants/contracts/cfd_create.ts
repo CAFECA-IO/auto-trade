@@ -92,7 +92,7 @@ const CFDOrderCreate = {
     fee: 0,
     // takeProfit: null,
     // stopLoss: null,
-    guaranteedStop: null,
+    guaranteedStop: false,
     // stopLoss: null,
     // guaranteedStopFee: null,
     // remark: null,

@@ -14,9 +14,17 @@ describe('PriceTickerService', () => {
     service = module.get<PriceTickerService>(PriceTickerService);
   });
 
-  it('should return an array of price tickers by findall', async () => {
+  it('should return quotation', async () => {
     const res = await service.getCFDQuotation('SELL');
-    await console.log(res);
+    console.log(res);
     expect(res).toBeDefined();
+  });
+
+  it('should return an array of price tickers', async () => {
+    const ETHdataArray: number[] = await service.getTickers('ETH-USDT');
+    const BTCdataArray: number[] = await service.getTickers('BTC-USDT');
+    console.log(ETHdataArray);
+    console.log(BTCdataArray);
+    // expect(res).toBeDefined();
   });
 });
