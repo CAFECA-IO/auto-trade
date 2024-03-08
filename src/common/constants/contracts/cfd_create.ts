@@ -1,3 +1,5 @@
+import { getTimestamp } from '../../common';
+
 const CFDOrderCreate = {
   domain: {
     // Defining the chain aka Rinkeby testnet or Ethereum Main Net
@@ -10,7 +12,7 @@ const CFDOrderCreate = {
     version: 'v1.0.0',
   },
   // Refers to the keys of the *types* object below.
-  primaryType: 'CFDOrderCreate',
+  primaryType: 'CFDOrderCreateData',
   types: {
     EIP712Domain: [
       { name: 'name', type: 'string' },
@@ -18,35 +20,38 @@ const CFDOrderCreate = {
       { name: 'chainId', type: 'string' },
       { name: 'verifyingContract', type: 'address' },
     ],
-    CFDOrderCreate: [
-      { name: 'ticker', type: 'string' },
+    CFDOrderCreateData: [
+      { name: 'instId', type: 'string' },
       { name: 'quotation', type: 'Quotation' },
       { name: 'typeOfPosition', type: 'string' },
       { name: 'price', type: 'uint256' },
-      { name: 'amount', type: 'string' },
+      { name: 'amount', type: 'uint256' },
       { name: 'targetAsset', type: 'string' },
       { name: 'unitAsset', type: 'string' },
       { name: 'margin', type: 'Margin' },
       { name: 'leverage', type: 'uint256' },
       { name: 'liquidationPrice', type: 'uint256' },
       { name: 'liquidationTime', type: 'uint256' },
-      { name: 'fee', type: 'string' },
+      { name: 'fee', type: 'uint256' },
       { name: 'createTimestamp', type: 'uint256' },
-      //   { name: 'takeProfit', type: 'uint256' },
-      //   { name: 'stopLoss', type: 'uint256' },
-      //   { name: 'guaranteedStop', type: 'bool' },
-      //   { name: 'guaranteedStopFee', type: 'uint256' },
-      //   { name: 'remark', type: 'string' },
+      { name: 'guaranteedStop', type: 'bool' },
+      // { name: 'takeProfit', type: 'uint256' },
+      // { name: 'stopLoss', type: 'uint256' },
+      // { name: 'guaranteedStopFee', type: 'uint256' },
+      // { name: 'remark', type: 'string' },
     ],
     Margin: [
       { name: 'asset', type: 'string' },
       { name: 'amount', type: 'uint256' },
     ],
     Quotation: [
-      { name: 'ticker', type: 'string' },
+      { name: 'instId', type: 'string' },
       { name: 'targetAsset', type: 'string' },
       { name: 'unitAsset', type: 'string' },
+      { name: 'typeOfPosition', type: 'string' },
       { name: 'price', type: 'uint256' },
+      { name: 'spotPrice', type: 'uint256' },
+      { name: 'spreadFee', type: 'uint256' },
       { name: 'deadline', type: 'uint256' },
       { name: 'signature', type: 'string' },
     ],
@@ -59,32 +64,36 @@ const CFDOrderCreate = {
         - This is DApp Specific
         - Be as explicit as possible when building out the message schema.
         */
-    ticker: 'ETH',
+    instId: 'ETH',
+    quotation: {
+      instId: 'ETH',
+      targetAsset: 'ETH',
+      unitAsset: 'USDT',
+      typeOfPosition: 'BUY',
+      price: 21023,
+      spotPrice: 210232,
+      spreadFee: 0,
+      deadline: 2412412412,
+      signature: '0x',
+    },
     typeOfPosition: 'BUY',
     price: 21023,
     amount: 2,
     targetAsset: 'ETH',
     unitAsset: 'USDT',
-    leverage: 5,
     margin: {
       asset: 'BTC',
       amount: 112,
     },
+    leverage: 5,
     liquidationPrice: 19083,
-    liquidationTime: 234123421342,
+    liquidationTime: getTimestamp() + 86400,
     createTimestamp: Math.ceil(Date.now()),
-    fee: '0',
-    quotation: {
-      ticker: 'ETH',
-      targetAsset: 'ETH',
-      unitAsset: 'USDT',
-      price: 21023,
-      deadline: 2412412412,
-      signature: '0x',
-    },
+    fee: 0,
     // takeProfit: null,
     // stopLoss: null,
-    // guaranteedStop: null,
+    guaranteedStop: false,
+    // stopLoss: null,
     // guaranteedStopFee: null,
     // remark: null,
   },

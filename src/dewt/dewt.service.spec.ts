@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DewtService } from './dewt.service';
 import { CreateDewtDto } from './dto/create-dewt.dto';
-import { randomHex } from '../lib/common';
+import { randomHex } from '../common/common';
 
 describe('DewtService', () => {
   let service: DewtService;

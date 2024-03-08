@@ -6,9 +6,10 @@ import { PriceTickerModule } from './price_ticker/price_ticker.module';
 import { DewtModule } from './dewt/dewt.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { TradebotModule } from './tradebot/tradebot.module';
+import { StrategiesModule } from './strategies/strategies.module';
 
 @Module({
-  imports: [UserModule, PriceTickerModule, DewtModule, TransactionModule, TradebotModule],
+  imports: [UserModule, PriceTickerModule, DewtModule, TransactionModule, TradebotModule, StrategiesModule],
   controllers: [AppController],
   providers: [AppService],
 })

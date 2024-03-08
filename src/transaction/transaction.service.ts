@@ -1,21 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { CreateDepositDto } from './dto/createDeposit.dto';
-import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { PriceTicker } from '../price_ticker/entities/price_ticker.entity';
-import { PriceTickerService } from '../price_ticker/price_ticker.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { Deposit } from './entities/deposit.entity';
 import { CFDOrder } from './entities/CFDOrder.entity';
 import CFDOrderCreate from '../common/constants/contracts/cfd_create';
 import { SignTypedDataVersion, signTypedData } from '@metamask/eth-sig-util';
+import { CreateCFDOrderDTO } from './dto/createCFDOrder.dto';
+import { QuotationDto } from '../price_ticker/dto/quotation.dto';
+import { SafeMath } from '../common/safe_math';
+import { getTimestamp } from '../common/common';
+import { CloseCFDOrderDto } from './dto/closeCFD.dto';
+import CFDOrderClose from '../common/constants/contracts/cfd_close';
+import { MarginDto } from './dto/margin.dto';
 
 @Injectable()
 export class TransactionService {
-  constructor(
-    private readonly priceTickerService: PriceTickerService,
-    private readonly httpService: HttpService,
-  ) {}
+  constructor(private readonly httpService: HttpService) {}
 
   async deposit(
     dewt: string,
@@ -37,64 +38,137 @@ export class TransactionService {
     return data;
   }
   async getCFDTrade(dewt: string, id: string): Promise<any> {}
-  async createCFDOrder( // typeOfPosition: string,
-  // dewt: string,
-  // createDepositDto: CreateDepositDto,
-  // amount: number,
-  // privatekey: string,
+  async createCFDOrder(
+    dewt: string,
+    privatekey: string,
+    quotation: QuotationDto,
+    amount: number,
   ): Promise<any> {
-    //   // should have return type
-    //   const quotation =
-    //     await this.priceTickerService.getCFDQuotation(typeOfPosition);
-    //   quotation.data.ticker = quotation.data.targetAsset;
-    //   const myAsset = await this.getMyAsset(dewt);
-    //   const typeData = CFDOrderCreate;
-    //   quotation.data.price = quotation.data.price * (10 ** 5);
-    //   typeData.message = {
-    //     ticker: quotation.data.ticker,
-    //     typeOfPosition: typeOfPosition,
-    //     quotation: quotation.data,
-    //     price: quotation.data.price * (10 ** 5),
-    //     amount: amount * (10 ** 5),
-    //     targetAsset: quotation.data.targetAsset,
-    //     unitAsset: quotation.data.unitAsset,
-    //     margin: {
-    //       asset: 'USDT',
-    //       amount: 0.0,
-    //     },
-    //     leverage: 5, // maybe can change
-    //     liquidationPrice: quotation.data.price * 0.9 * (10 ** 5),
-    //     liquidationTime: quotation.data.deadline + 60 * 60 * 24 * 7,
-    //     // guaranteedStop: false,
-    //     fee: '0',
-    //     // guaranteedStopFee: 0,
-    //     createTimestamp: quotation.data.deadline - 5,
-    //     // takeProfit: 0,
-    //     // stopLoss: 0,
-    //     // remark: '',
-    //   };
-    //   const eip712signature = signTypedData({
-    //     privateKey: Buffer.from(privatekey, 'hex'),
-    //     data: typeData as any,
-    //     version: SignTypedDataVersion.V4,
-    //   });
-    //   console.log(eip712signature);
-    //   const { data } = await firstValueFrom(
-    //     this.httpService.post<any>(
-    //       'https://api.tidebit-defi.com/api/v1/users/cfds/create',
-    //       { applyData: typeData.message, userSignature: eip712signature },
-    //       {
-    //         headers: {
-    //           'Content-Type': 'application/json',
-    //           Dewt: dewt,
-    //         },
-    //       },
-    //     ),
-    //   );
-    //   console.log(data);
-    //   return data;
+    const createCFDDto = new CreateCFDOrderDTO();
+    const typeData = CFDOrderCreate;
+    createCFDDto.instId = quotation.data.instId;
+    createCFDDto.quotation = quotation.data;
+    createCFDDto.typeOfPosition = quotation.data.typeOfPosition;
+    createCFDDto.price = quotation.data.price;
+    createCFDDto.amount = amount;
+    createCFDDto.targetAsset = quotation.data.targetAsset;
+    createCFDDto.unitAsset = quotation.data.unitAsset;
+    const marginDTO = new MarginDto();
+    marginDTO.asset = 'USDT';
+    createCFDDto.leverage = 5;
+    if (quotation.data.typeOfPosition === 'BUY') {
+      marginDTO.amount = (createCFDDto.price * amount) / createCFDDto.leverage;
+      createCFDDto.liquidationPrice =
+        quotation.data.price * (1 - 1 / createCFDDto.leverage);
+    } else {
+      marginDTO.amount = (createCFDDto.price * amount) / createCFDDto.leverage;
+      createCFDDto.liquidationPrice =
+        quotation.data.price * (1 + 1 / createCFDDto.leverage);
+    }
+    createCFDDto.margin = marginDTO;
+    createCFDDto.liquidationTime = getTimestamp() + 86400;
+    createCFDDto.createTimestamp = getTimestamp();
+    createCFDDto.fee = 0;
+    createCFDDto.guaranteedStop = false;
+    const typeDataTemp = JSON.stringify(createCFDDto);
+    typeData.message = JSON.parse(typeDataTemp);
+    typeData.message.quotation.price = SafeMath.toSmallestUnit(
+      typeData.message.quotation.price,
+      10,
+    );
+    typeData.message.quotation.spotPrice = SafeMath.toSmallestUnit(
+      typeData.message.quotation.spotPrice,
+      10,
+    );
+    typeData.message.quotation.spreadFee = Math.abs(
+      SafeMath.toSmallestUnit(typeData.message.quotation.spreadFee, 10),
+    );
+    typeData.message.price = SafeMath.toSmallestUnit(
+      typeData.message.price,
+      10,
+    );
+    typeData.message.amount = SafeMath.toSmallestUnit(
+      typeData.message.amount,
+      10,
+    );
+    typeData.message.leverage = SafeMath.toSmallestUnit(
+      typeData.message.leverage,
+      10,
+    );
+    typeData.message.liquidationPrice = SafeMath.toSmallestUnit(
+      typeData.message.liquidationPrice,
+      10,
+    );
+    typeData.message.margin.amount = Math.abs(
+      SafeMath.toSmallestUnit(typeData.message.margin.amount, 10),
+    );
+    const eip712signature = signTypedData({
+      privateKey: Buffer.from(privatekey, 'hex'),
+      data: typeData as any,
+      version: SignTypedDataVersion.V4,
+    });
+    const { data } = await lastValueFrom(
+      this.httpService.post<any>(
+        'https://api.tidebit-defi.com/api/v1/users/cfds/create',
+        { applyData: createCFDDto, userSignature: eip712signature },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
   }
-  async closeCFDOrder(): Promise<any> {
-    // should have return type
+  async closeCFDOrder(
+    dewt: string,
+    privatekey: string,
+    quotation: QuotationDto,
+    referenceId: string,
+  ): Promise<any> {
+    const closeCFDOrderDto = new CloseCFDOrderDto();
+    const typeData = CFDOrderClose;
+    closeCFDOrderDto.referenceId = referenceId;
+    closeCFDOrderDto.quotation = quotation.data;
+    closeCFDOrderDto.closePrice = quotation.data.price;
+    closeCFDOrderDto.closedType = 'BY_USER';
+    closeCFDOrderDto.closeTimestamp = getTimestamp();
+    const typeDataTemp = JSON.stringify(closeCFDOrderDto);
+    typeData.message = JSON.parse(typeDataTemp);
+    typeData.message.quotation.price = SafeMath.toSmallestUnit(
+      quotation.data.price,
+      10,
+    );
+    typeData.message.quotation.spotPrice = SafeMath.toSmallestUnit(
+      quotation.data.spotPrice,
+      10,
+    );
+    typeData.message.quotation.spreadFee = Math.abs(
+      SafeMath.toSmallestUnit(quotation.data.spreadFee, 10),
+    );
+    typeData.message.closePrice = SafeMath.toSmallestUnit(
+      closeCFDOrderDto.closePrice,
+      10,
+    );
+    const eip712signature = signTypedData({
+      privateKey: Buffer.from(privatekey, 'hex'),
+      data: typeData as any,
+      version: SignTypedDataVersion.V4,
+    });
+    const { data } = await lastValueFrom(
+      //should be put
+      this.httpService.put<any>(
+        'https://api.tidebit-defi.com/api/v1/users/cfds/close',
+        { applyData: closeCFDOrderDto, userSignature: eip712signature },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
   }
 }

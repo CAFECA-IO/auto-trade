@@ -7,9 +7,9 @@ export class QuotationDto {
     targetAsset: string;
     unitAsset: string;
     typeOfPosition: string; //BUY or SELL
-    price: string;
-    spotPrice: string;
-    spreadFee: string;
+    price: number;
+    spotPrice: number;
+    spreadFee: number;
     deadline: number;
     signature: string;
   };
