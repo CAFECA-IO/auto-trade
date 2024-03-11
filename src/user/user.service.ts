@@ -3,6 +3,8 @@ import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { myAsset } from './entities/myAsset.entity';
 import { HistoryList } from './entities/history.entity';
+import { HDNodeWallet, ethers } from 'ethers';
+import CFDOrderCreate from '../common/constants/contracts/cfd_create';
 
 @Injectable()
 export class UserService {
@@ -35,27 +37,15 @@ export class UserService {
     );
     return data;
   }
-  async listCFDs(dewt: string): Promise<any> {
-    const { data } = await firstValueFrom(
-      this.httpService.get<any>(this.TBDBackendUrl + 'cfds', {
-        headers: {
-          'Content-Type': 'application/json',
-          Dewt: dewt,
-        },
-      }),
-    );
-    return data;
+  createWallet(): HDNodeWallet {
+    const randomWallet = ethers.Wallet.createRandom();
+    return randomWallet;
   }
-  // async listBalances(dewt: string): Promise<any> {
-  //   const { data } = await firstValueFrom(
-  //     this.httpService.get<any>(this.TBDBackendUrl + 'cfds', {
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Dewt: dewt,
-  //       },
-  //     }),
-  //   );
-  //   return data;
-  // }
-  async getPNL(dewt: string): Promise<any> {}
+
+  connectWallet(privateKey: string) {
+    const realWallet = new ethers.Wallet(privateKey);
+    return realWallet;
+  }
+  sendToken(){}
+  receiveToken(){}
 }

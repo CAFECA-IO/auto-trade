@@ -10,7 +10,7 @@ import { CreateCFDOrderDTO } from './dto/createCFDOrder.dto';
 import { QuotationDto } from '../price_ticker/dto/quotation.dto';
 import { SafeMath } from '../common/safe_math';
 import { getTimestamp } from '../common/common';
-import { CloseCFDOrderDto } from './dto/closeCFD.dto';
+import { CloseCFDOrderDto } from './dto/closeCFDOrder.dto';
 import CFDOrderClose from '../common/constants/contracts/cfd_close';
 import { MarginDto } from './dto/margin.dto';
 
@@ -46,6 +46,8 @@ export class TransactionService {
   ): Promise<any> {
     const createCFDDto = new CreateCFDOrderDTO();
     const typeData = CFDOrderCreate;
+    createCFDDto.operation = 'CREATE';
+    createCFDDto.orderType = 'CFD';
     createCFDDto.instId = quotation.data.instId;
     createCFDDto.quotation = quotation.data;
     createCFDDto.typeOfPosition = quotation.data.typeOfPosition;
@@ -107,10 +109,11 @@ export class TransactionService {
       data: typeData as any,
       version: SignTypedDataVersion.V4,
     });
+    const applyData = createCFDDto;
     const { data } = await lastValueFrom(
       this.httpService.post<any>(
         'https://api.tidebit-defi.com/api/v1/users/cfds/create',
-        { applyData: createCFDDto, userSignature: eip712signature },
+        { applyData: applyData, userSignature: eip712signature },
         {
           headers: {
             'Content-Type': 'application/json',
@@ -129,6 +132,8 @@ export class TransactionService {
   ): Promise<any> {
     const closeCFDOrderDto = new CloseCFDOrderDto();
     const typeData = CFDOrderClose;
+    closeCFDOrderDto.operation = 'CLOSE';
+    closeCFDOrderDto.orderType = 'CFD';
     closeCFDOrderDto.referenceId = referenceId;
     closeCFDOrderDto.quotation = quotation.data;
     closeCFDOrderDto.closePrice = quotation.data.price;

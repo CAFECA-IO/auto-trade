@@ -29,7 +29,7 @@ describe('TransactionService', () => {
     priceTickerService = module.get<PriceTickerService>(PriceTickerService);
     userService = module.get<UserService>(UserService);
     DEWT =
-      'f8848b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a748465eb5d288465ead088.998194a06598f921c109222a5803fec9d927dfa895425bfce60d79c6f5389ceb594191bcfb1d2dea46fad135eae78ac7cb765016f4c2eafafb8a1654c81e0f381b';
+      'f8858b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a748508c7b2e1618465ee7961.525809798fe6c1028aa4c32d28cc47b3683da0b7e954b18659c2b127e98cf96825c6693e5c355c5e72f9a1558be632fb89c5bf07006061afb03b1a894b2eb0b01c';
     privateKey =
       '54405e07a12ece2ff6abcf56b955343b671ba2913bae5474433ee03aa5b912d9';
   });
@@ -62,7 +62,6 @@ describe('TransactionService', () => {
     // should fake a quotation
     const typeOfPosition = 'BUY';
     const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
-    console.log(quotation);
     const closeCFDOrder = await transactionService.closeCFDOrder(
       DEWT,
       privateKey,
