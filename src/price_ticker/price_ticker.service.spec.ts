@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PriceTickerService } from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
+import { CandlestickDto } from './dto/candlestick.dto';
 
 describe('PriceTickerService', () => {
   let service: PriceTickerService;
@@ -23,6 +24,14 @@ describe('PriceTickerService', () => {
   it('should return an array of price tickers', async () => {
     const ETHdataArray: number[] = await service.getTickers('ETH-USDT');
     const BTCdataArray: number[] = await service.getTickers('BTC-USDT');
+    console.log(ETHdataArray);
+    console.log(BTCdataArray);
+    // expect(res).toBeDefined();
+  });
+
+  it('should return an array of candlestick', async () => {
+    const ETHdataArray: number[] = await service.getCandlesticks('ETH-USDT');
+    const BTCdataArray: number[] = await service.getCandlesticks('BTC-USDT');
     console.log(ETHdataArray);
     console.log(BTCdataArray);
     // expect(res).toBeDefined();

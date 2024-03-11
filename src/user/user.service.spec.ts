@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { HttpModule } from '@nestjs/axios';
+import { HDNodeWallet } from 'ethers';
 
 describe('UserService', () => {
   let service: UserService;
@@ -28,15 +29,10 @@ describe('UserService', () => {
     expect(result).not.toBeNull();
   }, 300000); // too much time to get all the data
 
-  it('should return CFD data', async () => {
-    const result = await service.listCFDs(dewt);
-    console.log(result);
-    expect(result).not.toBeNull();
-  });
-
-  it('should return PNL data', async () => {
-    const result = await service.getPNL(dewt);
-    console.log(result);
+  it('should return wallet data', async () => {
+    const result: HDNodeWallet = await service.createWallet();
+    console.log(result.address);
+    console.log('🚀 ~ it ~ privateKey:', result.privateKey);
     expect(result).not.toBeNull();
   });
 });

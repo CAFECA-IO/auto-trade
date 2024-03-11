@@ -2,6 +2,8 @@ import { QuotationDto } from '../../price_ticker/dto/quotation.dto';
 import { MarginDto } from './margin.dto';
 
 export class CreateCFDOrderDTO {
+  operation: string; // CREATE
+  orderType: string; // CFD
   instId: string;
   quotation: QuotationDto['data'];
   typeOfPosition: string; //BUY or SELL

@@ -1,6 +1,8 @@
 import { QuotationDto } from '../../price_ticker/dto/quotation.dto';
 
 export class CloseCFDOrderDto {
+  operation: string; //CLOSE
+  orderType: string; // CFD
   referenceId: string;
   quotation: QuotationDto['data'];
   closePrice: number;

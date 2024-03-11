@@ -1,4 +1,4 @@
 export class CreateDewtDto {
   address: string;
-  privatekey: string;
+  privateKey: string;
 }
