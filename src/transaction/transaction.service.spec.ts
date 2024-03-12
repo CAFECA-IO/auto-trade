@@ -29,18 +29,13 @@ describe('TransactionService', () => {
     priceTickerService = module.get<PriceTickerService>(PriceTickerService);
     userService = module.get<UserService>(UserService);
     DEWT =
-      'f8858b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a748508c7b2e1618465ee7961.525809798fe6c1028aa4c32d28cc47b3683da0b7e954b18659c2b127e98cf96825c6693e5c355c5e72f9a1558be632fb89c5bf07006061afb03b1a894b2eb0b01c';
+      'f8858b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a748508c7b44aa48465efe2a4.8c15910505d956131e4dfffa11f41b74da0a6b3408514b11c837da637f15988741d36ce41cc5b4420aa1d6f20e87797ffd1bc2de9434e568e1da4c5cdefdd6d81b';
     privateKey =
       '54405e07a12ece2ff6abcf56b955343b671ba2913bae5474433ee03aa5b912d9';
   });
 
-  it('should be deposit', () => {
-    const createDepositDto = new CreateDepositDto();
-    createDepositDto.blockchain = 'ETH';
-    createDepositDto.txhash = '0x123';
-    createDepositDto.targetAsset = 'USDT';
-    createDepositDto.targetAmount = 100;
-    const deposit = transactionService.deposit(DEWT, createDepositDto);
+  it('should be deposit', async () => {
+    const deposit = await transactionService.deposit(DEWT);
     console.log(deposit);
     // expect(service).toBeDefined();
   });
@@ -66,8 +61,12 @@ describe('TransactionService', () => {
       DEWT,
       privateKey,
       quotation,
-      '0x7436b8e494d9d03ad4d8a6fd647f00d8',
+      '0x78ff8bc97857e6e49bc84ccf4c59191d',
     );
     console.log(closeCFDOrder);
+  });
+  it('should calculate amount', async () => {
+    const amount = transactionService.calculateAmount(4000);
+    console.log(amount);
   });
 });
