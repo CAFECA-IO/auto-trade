@@ -7,28 +7,28 @@ import { UpdateStrategyDto } from './dto/update-strategy.dto';
 export class StrategiesController {
   constructor(private readonly strategiesService: StrategiesService) {}
 
-  @Post()
-  create(@Body() createStrategyDto: CreateStrategyDto) {
-    return this.strategiesService.create(createStrategyDto);
-  }
+  // @Post()
+  // create(@Body() createStrategyDto: CreateStrategyDto) {
+  //   return this.strategiesService.create(createStrategyDto);
+  // }
 
-  @Get()
-  findAll() {
-    return this.strategiesService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.strategiesService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.strategiesService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.strategiesService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStrategyDto: UpdateStrategyDto) {
-    return this.strategiesService.update(+id, updateStrategyDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateStrategyDto: UpdateStrategyDto) {
+  //   return this.strategiesService.update(+id, updateStrategyDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.strategiesService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.strategiesService.remove(+id);
+  // }
 }

@@ -37,6 +37,7 @@ export class UserService {
     );
     return data;
   }
+  async getCFDTrade(dewt: string, id: string): Promise<any> {}
   createWallet(): HDNodeWallet {
     const randomWallet = ethers.Wallet.createRandom();
     return randomWallet;

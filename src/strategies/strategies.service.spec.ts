@@ -28,35 +28,15 @@ describe('StrategiesService', () => {
     );
     const ETHPriceArray = await priceTickerService.getCandlesticks('ETH-USDT');
     const BTCPriceArray = await priceTickerService.getCandlesticks('BTC-USDT');
-    const [
-      ETHSuggestion,
-      ETHspreadFee,
-      ETHlastPrice,
-      ETHPredictMax,
-      ETHPredictMin,
-    ] = strategiesService.autoARIMA(ETHPriceArray, ETHQuotation);
-    const [
-      BTCSuggestion,
-      BTCspreadFee,
-      BTClastPrice,
-      BTCPredictMax,
-      BTCPredictMin,
-    ] = strategiesService.autoARIMA(BTCPriceArray, BTCQuotation);
-    console.log(
-      ETHlastPrice,
-      ETHspreadFee,
-      ETHSuggestion,
-      ETHPredictMax,
-      ETHPredictMin,
+    const ETHSuggestion = strategiesService.autoARIMASuggestion(
+      ETHPriceArray,
+      ETHQuotation.data.spreadFee,
     );
-    // console.log(ETHSuggestion);
-    console.log(
-      BTClastPrice,
-      BTCspreadFee,
-      BTCSuggestion,
-      BTCPredictMax,
-      BTCPredictMin,
+    const BTCSuggestion = strategiesService.autoARIMASuggestion(
+      BTCPriceArray,
+      BTCQuotation.data.spreadFee,
     );
-    // console.log(BTCSuggestion);
+    console.log(ETHSuggestion);
+    console.log(BTCSuggestion);
   });
 });

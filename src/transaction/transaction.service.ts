@@ -13,15 +13,18 @@ import { getTimestamp } from '../common/common';
 import { CloseCFDOrderDto } from './dto/closeCFDOrder.dto';
 import CFDOrderClose from '../common/constants/contracts/cfd_close';
 import { MarginDto } from './dto/margin.dto';
+import { ReturnCFDOrderDto } from './dto/returnCFDOrder.dto';
 
 @Injectable()
 export class TransactionService {
   constructor(private readonly httpService: HttpService) {}
 
-  async deposit(
-    dewt: string,
-    createDepositDto: CreateDepositDto,
-  ): Promise<Deposit> {
+  async deposit(dewt: string, amount: number = 100): Promise<Deposit> {
+    const createDepositDto = new CreateDepositDto();
+    createDepositDto.blockchain = 'ETH';
+    createDepositDto.txhash = '0x123';
+    createDepositDto.targetAsset = 'USDT';
+    createDepositDto.targetAmount = amount;
     const { data } = await firstValueFrom(
       this.httpService.post<Deposit>(
         'https://api.tidebit-defi.com/api/v1/users/deposit',
@@ -34,16 +37,15 @@ export class TransactionService {
         },
       ),
     );
-    console.log(data);
     return data;
   }
-  async getCFDTrade(dewt: string, id: string): Promise<any> {}
+
   async createCFDOrder(
     dewt: string,
     privatekey: string,
     quotation: QuotationDto,
     amount: number,
-  ): Promise<any> {
+  ): Promise<ReturnCFDOrderDto> {
     const createCFDDto = new CreateCFDOrderDTO();
     const typeData = CFDOrderCreate;
     createCFDDto.operation = 'CREATE';
@@ -129,7 +131,7 @@ export class TransactionService {
     privatekey: string,
     quotation: QuotationDto,
     referenceId: string,
-  ): Promise<any> {
+  ): Promise<ReturnCFDOrderDto> {
     const closeCFDOrderDto = new CloseCFDOrderDto();
     const typeData = CFDOrderClose;
     closeCFDOrderDto.operation = 'CLOSE';
@@ -175,5 +177,9 @@ export class TransactionService {
       ),
     );
     return data;
+  }
+  calculateAmount(price: number): number {
+    const nearest = (100 / (price / 5) - 0.01).toFixed(2);
+    return Number(nearest);
   }
 }

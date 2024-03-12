@@ -15,8 +15,8 @@ export class DewtController {
   constructor(private readonly dewtService: DewtService) {}
 
   @Post()
-  create(@Body() createDewtDto: CreateDewtDto) {
-    return this.dewtService.create(createDewtDto);
+  create(@Body() address: string, privateKey: string) {
+    return this.dewtService.create(address, privateKey);
   }
 
   // @Get()
@@ -26,18 +26,18 @@ export class DewtController {
   //   );
   // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.dewtService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.dewtService.findOne(+id);
+  // }
 
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateDewtDto: UpdateDewtDto) {
   //   return this.dewtService.update(+id, updateDewtDto);
   // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.dewtService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.dewtService.remove(+id);
+  // }
 }
