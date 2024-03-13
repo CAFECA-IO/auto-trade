@@ -12,6 +12,21 @@ export class UserService {
   constructor(private readonly httpService: HttpService) {
     this.TBDBackendUrl = 'https://api.tidebit-defi.com/api/v1/';
   }
+  async registerUser(address: string, dewt: string): Promise<any> {
+    const { data } = await firstValueFrom(
+      this.httpService.post(
+        this.TBDBackendUrl + 'dewt',
+        { address: address, deWT: dewt },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
+  }
   async getMyAsset(dewt: string): Promise<myAsset> {
     const { data } = await firstValueFrom(
       this.httpService.get<myAsset>(this.TBDBackendUrl + 'users/assets', {
@@ -47,6 +62,6 @@ export class UserService {
     const realWallet = new ethers.Wallet(privateKey);
     return realWallet;
   }
-  sendToken(){}
-  receiveToken(){}
+  sendToken() {}
+  receiveToken() {}
 }
