@@ -18,11 +18,11 @@ describe('DewtService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should return a dewt', () => {
-    const address = '0xC76D6C61dfa7DBb7700Ad3ED390E5eaf98337A74';
+  it('should return a dewt', async () => {
+    const address = '0xF1cbCfee8e05549B8E6c6192216193D389fe49aE';
     const privateKey =
       '496d0910854c0140df89ed3271084a93ffe9b91bbe8b05c36ee74e646bd02f38';
-    const dewt = service.create(address, privateKey);
+    const dewt = await service.create(address, privateKey);
     console.log(dewt);
   });
 });

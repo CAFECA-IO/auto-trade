@@ -14,17 +14,17 @@ export class StrategiesService {
     const predictMax = Math.max(...predict);
     const predictMin = Math.min(...predict);
     const lastPrice = priceArray[priceArray.length - 1];
-    if (predictMax - lastPrice > AbsspreadFee * 1.3) {
+    if (predictMax - lastPrice > AbsspreadFee * 1.5) {
       suggestion = 'BUY';
       return suggestion;
     }
-    if (lastPrice - predictMin > AbsspreadFee * 1.3) {
+    if (lastPrice - predictMin > AbsspreadFee * 1.5) {
       suggestion = 'SELL';
       return suggestion;
     }
     return suggestion;
   }
-  runTradeStrategy(suggestion: string, holdingStatus: string) {
+  purchaseStrategy(suggestion: string, holdingStatus: string) {
     if (suggestion === 'BUY') {
       if (holdingStatus === 'WAIT') {
         return 'BUY';
@@ -49,6 +49,32 @@ export class StrategiesService {
     }
   }
 
-  stopStrategy() {}
+  closeStrategy(
+    openPrice: number,
+    currentPrice: number,
+    spreadFee: number,
+    holdingStatus: string,
+  ) {
+    const AbsspreadFee = Math.abs(spreadFee);
+    if (holdingStatus === 'BUY') {
+      if (currentPrice - openPrice > AbsspreadFee * 2) {
+        return 'CLOSE';
+      }
+      if (openPrice - currentPrice < AbsspreadFee * -0.5) {
+        return 'CLOSE';
+      }
+      return 'WAIT';
+    }
+    if (holdingStatus === 'SELL') {
+      if (openPrice - currentPrice < AbsspreadFee * -2) {
+        return 'CLOSE';
+      }
+      if (currentPrice - openPrice > AbsspreadFee * 0.5) {
+        return 'CLOSE';
+      }
+      return 'WAIT';
+    }
+    return 'WAIT';
+  }
   backTest() {}
 }

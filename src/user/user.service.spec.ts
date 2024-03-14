@@ -6,6 +6,8 @@ import { HDNodeWallet } from 'ethers';
 describe('UserService', () => {
   let service: UserService;
   let dewt: string;
+  let address: string;
+  let privateKey: string;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [HttpModule],
@@ -14,7 +16,16 @@ describe('UserService', () => {
 
     service = module.get<UserService>(UserService);
     dewt =
-      'f8858b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94c76d6c61dfa7dbb7700ad3ed390e5eaf98337a748508c7b44de38465efe5e3.0d4b32f0781552cba08e2e8cdd98b3427a8e7e1970cb5d3c07e84ab27c9689a4786429d8902930d06b04472796f53a04e30acb1f27a31e9016a3510c12bcb0571b';
+      'f8848b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94a2d6fa8bf05f82b82e7a2dd0583a3366b19ea1808465f29b038465f14983.a8c725c44ae2262e523b96905987f5afadcab195551370f01169684197ccf16d0125f683a40fbe93bc34ee4b1bd960e292e82cdc639f89f00bd8dddfd529cd591c';
+    address = '0xa2D6fa8bf05F82B82e7A2Dd0583A3366B19Ea180';
+    privateKey =
+      '496d0910854c0140df89ed3271084a93ffe9b91bbe8b05c36ee74e646bd02f38';
+  });
+
+  it('should register User', async () => {
+    const result = await service.registerUser(address, dewt);
+    console.log(result);
+    expect(result).not.toBeNull();
   });
 
   it('should return asset data', async () => {
@@ -33,6 +44,12 @@ describe('UserService', () => {
     const result: HDNodeWallet = await service.createWallet();
     console.log(result.address);
     console.log('🚀 ~ it ~ privateKey:', result.privateKey);
+    expect(result).not.toBeNull();
+  });
+
+  it('should connect real wallet', async () => {
+    const result = await service.connectWallet(privateKey);
+    console.log(result.signingKey);
     expect(result).not.toBeNull();
   });
 });

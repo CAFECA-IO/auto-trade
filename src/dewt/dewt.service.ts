@@ -8,7 +8,7 @@ import { CreateDewtDto } from './dto/create-dewt.dto';
 
 @Injectable()
 export class DewtService {
-  create(address: string, privateKey: string): string {
+  async create(address: string, privateKey: string): Promise<string> {
     const serviceTermContract = getServiceTermContract(address);
     const encodedData = rlpEncodeServiceTerm(serviceTermContract);
     const eip712signature = signTypedData({

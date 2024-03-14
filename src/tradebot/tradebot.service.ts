@@ -21,59 +21,80 @@ export class TradebotService {
     private readonly trancsactionService: TransactionService,
   ) {}
   private readonly logger = new Logger(TradebotService.name);
-  private tradebot: Tradebot; // not sure if this is the right way to do it
-  create(privateKey?: string) {
-    this.tradebot = new Tradebot();
+  private tradebotArray: Tradebot[] = []; // not sure if this is the right way to do it
+  async create(privateKey?: string): Promise<Tradebot> {
+    const tradebot = new Tradebot();
     if (privateKey == null) {
-      this.tradebot.wallet = this.userService.createWallet();
+      tradebot.wallet = this.userService.createWallet();
     } else {
-      this.tradebot.wallet = this.userService.connectWallet(privateKey);
+      tradebot.wallet = this.userService.connectWallet(privateKey);
     }
-    this.tradebot.dewt = this.dewtService.create(
-      this.tradebot.wallet.address,
-      this.tradebot.wallet.privateKey.slice(2),
+    tradebot.dewt = await this.dewtService.create(
+      tradebot.wallet.address,
+      tradebot.wallet.privateKey.slice(2),
     );
+    for (let i = 0; i < 3; i++) {
+      const register = await this.userService.registerUser(
+        tradebot.wallet.address,
+        tradebot.dewt,
+      );
+      if (register.success == true) {
+        this.logger.log(
+          'Tradebot ' + tradebot.id + ' regist is ' + register.success,
+        );
+        // TODO: maybe add the tradebot to the database
+        this.tradebotArray.push(tradebot);
+        this.logger.log(
+          'Tradebot ' +
+            tradebot.id +
+            ' created at ' +
+            tradebot.created_at +
+            ' public address is ' +
+            tradebot.wallet.address,
+        );
+        return tradebot;
+      }
+    }
+    throw new Error('Tradebot ' + tradebot.id + ' registration failed');
+  }
+
+  getAllTradebots(): Tradebot[] {
+    return this.tradebotArray;
+  }
+
+  getTradebotById(id: string): Tradebot {
     this.logger.log(
-      'Tradebot ' +
-        this.tradebot.id +
-        ' created at ' +
-        this.tradebot.created_at,
+      'Tradebot ' + this.tradebotArray.find((tradebot) => tradebot.id === id),
     );
-    // TODO: add the tradebot to the database
-    return (
-      'Tradebot' + this.tradebot.id + 'created at ' + this.tradebot.created_at
-    );
+    return this.tradebotArray.find((tradebot) => tradebot.id === id);
   }
 
   // TODO: add the deposit to the database
-  async receiveDeposit() {
-    this.logger.log('Tradebot' + this.tradebot.id + ' is receiving deposit');
-    this.tradebot.dewt = this.dewtService.create(
-      this.tradebot.wallet.address,
-      this.tradebot.wallet.privateKey.slice(2),
-    );
-    const deposit = await this.trancsactionService.deposit(this.tradebot.id);
-    this.tradebot.startAsset = await this.userService.getMyAsset(
-      this.tradebot.dewt,
-    );
+  async receiveDeposit(tradebot: Tradebot) {
+    this.logger.log('Tradebot ' + tradebot.id + ' is receiving deposit');
+    const deposit = await this.trancsactionService.deposit(tradebot.dewt);
+    tradebot.startAsset = await this.userService.getMyAsset(tradebot.dewt);
     this.logger.log(
-      'Tradebot' +
-        this.tradebot.id +
+      'Tradebot ' +
+        tradebot.id +
         ' received deposit is ' +
         deposit.success +
-        'and startAvailable =' +
-        this.tradebot.startAsset.data.balance.available,
+        ' and startAvailable = ' +
+        tradebot.startAsset.data.balance.available,
     );
     return (
-      'Tradebot' +
-      this.tradebot.id +
+      'Tradebot ' +
+      tradebot.id +
       ' received deposit is ' +
-      deposit +
-      'and startAvailable =' +
-      this.tradebot.startAsset.data.balance.available
+      deposit.success +
+      ' and startAvailable = ' +
+      tradebot.startAsset.data.balance.available
     );
   }
-  async executeStrategy(instId: string, holdingStatus: string) {
+  async executePurchaseStrategy(tradebot: Tradebot, instId: string) {
+    this.logger.log(
+      'Tradebot ' + tradebot.id + ' is executing purchase strategy',
+    );
     // get price and quotation
     let quotation = await this.priceTickerService.getCFDQuotation(instId);
     const priceArray = await this.priceTickerService.getCandlesticks(instId);
@@ -81,80 +102,129 @@ export class TradebotService {
       priceArray,
       quotation.data.spreadFee,
     );
-    const tradeStrategy = this.strategiesService.runTradeStrategy(
+    const tradeStrategy = this.strategiesService.purchaseStrategy(
       suggestion,
-      holdingStatus,
+      tradebot.holdingStatus,
     );
     if (tradeStrategy === 'CLOSE') {
-      this.tradebot.dewt = this.dewtService.create(
-        this.tradebot.wallet.address,
-        this.tradebot.wallet.privateKey.slice(2),
-      );
-      this.tradebot.holdingStatus = 'WAIT';
-      this.tradebot.holdingInstId = null;
-      return this.trancsactionService.closeCFDOrder(
-        this.tradebot.dewt,
-        this.tradebot.wallet.privateKey.slice(2),
+      // this.dewt = await this.dewtService.create(
+      // this.wallet.address,
+      // this.wallet.privateKey.slice(2),
+      // );
+      const result = await this.trancsactionService.closeCFDOrder(
+        tradebot.dewt,
+        tradebot.wallet.privateKey.slice(2),
         quotation,
-        this.tradebot.positionId,
+        tradebot.positionId,
       );
+      if (result.success == false) {
+        this.logger.log(
+          'Tradebot ' + tradebot.id + ' failed to close position',
+        );
+        return 'Tradebot ' + tradebot.id + ' failed to close position';
+      }
+      tradebot.holdingStatus = 'WAIT';
+      tradebot.holdingInstId = null;
+      this.logger.log(
+        'Tradebot ' + tradebot.id + 'sucessfully closed position',
+      );
+      return 'Tradebot ' + tradebot.id + 'sucessfully closed position';
     }
     if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
       quotation = await this.priceTickerService.getCFDQuotation(
+        tradeStrategy,
         instId,
-        suggestion,
       );
       const amount = this.trancsactionService.calculateAmount(
         quotation.data.price,
       );
-      this.tradebot.holdingStatus = tradeStrategy;
-      this.tradebot.holdingInstId = instId;
+      tradebot.holdingStatus = tradeStrategy;
+      tradebot.holdingInstId = instId;
       const createCFDOrder = await this.trancsactionService.createCFDOrder(
-        this.tradebot.dewt,
-        this.tradebot.wallet.privateKey.slice(2),
+        tradebot.dewt,
+        tradebot.wallet.privateKey.slice(2),
         quotation,
         amount,
       );
-      this.tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
-      this.tradebot.openPrice = quotation.data.price;
-      this.tradebot.absSpreadFee = Math.abs(quotation.data.spreadFee);
-      return createCFDOrder;
+      tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
+      tradebot.openPrice = quotation.data.price;
+      tradebot.absSpreadFee = Math.abs(quotation.data.spreadFee);
+      this.logger.log(
+        'Tradebot ' + tradebot.id + ' created position in ' + instId,
+      );
+      return 'Tradebot ' + tradebot.id + ' created position in ' + instId;
     }
-    return 'Tradebot' + this.tradebot.id + ' is waiting';
+    if (tradebot.holdingStatus !== 'WAIT') {
+      this.logger.log('Tradebot' + tradebot.id + ' is holding position');
+      return 'Tradebot' + tradebot.id + ' is holding position';
+    }
+    this.logger.log('Tradebot' + tradebot.id + ' is waiting for chance');
+    return 'Tradebot' + tradebot.id + ' is waiting for chance';
   }
 
-  async run() {
-    this.logger.log('Tradebot' + this.tradebot.id + ' is running');
-    this.tradebot.holdingStatus = 'WAIT';
-    this.tradebot.holdingInstId = null;
-    while (true) {
-      const myAsset = await this.userService.getMyAsset(this.tradebot.dewt);
-      if (Number(myAsset.data.balance.available) < 100) {
-        break;
-      }
-      if (this.tradebot.holdingInstId !== 'BTC-USDT') {
-        const ETHResult = await this.executeStrategy(
-          'ETH-USDT',
-          this.tradebot.holdingStatus,
+  // stop profit and stop loss
+  async executeCloseStrategy(tradebot: Tradebot) {
+    this.logger.log('Tradebot ' + tradebot.id + ' is executing close strategy');
+    const quotation = await this.priceTickerService.getCFDQuotation(
+      tradebot.holdingStatus,
+      tradebot.holdingInstId,
+    );
+    const closeStrategy = this.strategiesService.closeStrategy(
+      tradebot.openPrice,
+      quotation.data.price,
+      quotation.data.spreadFee,
+      tradebot.holdingStatus,
+    );
+    if (closeStrategy === 'CLOSE') {
+      const result = await this.trancsactionService.closeCFDOrder(
+        tradebot.dewt,
+        tradebot.wallet.privateKey.slice(2),
+        quotation,
+        tradebot.positionId,
+      );
+      if (result.success == false) {
+        this.logger.log(
+          'Tradebot ' +
+            tradebot.id +
+            ' failed to close position in close strategy',
         );
-        if (ETHResult instanceof ReturnCFDOrderDto) {
-          if (ETHResult.success === false) {
-            break;
-          }
-        }
-      }
-      if (this.tradebot.holdingInstId !== 'ETH-USDT') {
-        const BTCResult = await this.executeStrategy(
-          'BTC-USDT',
-          this.tradebot.holdingStatus,
+        return (
+          'Tradebot ' +
+          tradebot.id +
+          ' failed to close position in close strategy'
         );
-        if (BTCResult instanceof ReturnCFDOrderDto) {
-          if (BTCResult.success === false) {
-            break;
-          }
-        }
       }
-      // stop loss
+      tradebot.holdingStatus = 'WAIT';
+      tradebot.holdingInstId = null;
+      this.logger.log(
+        'Tradebot ' +
+          tradebot.id +
+          'sucessfully closed position in close strategy',
+      );
+      return (
+        'Tradebot ' +
+        tradebot.id +
+        'sucessfully closed position in close strategy'
+      );
     }
+    this.logger.log(
+      'Tradebot' + tradebot.id + ' is holding position in close strategy',
+    );
+    return 'Tradebot' + tradebot.id + ' is holding position in close strategy';
+  }
+
+  async run(tradebot: Tradebot) {
+    setInterval(async () => {
+      this.logger.log('Tradebot ' + tradebot.id + ' is running');
+      if (tradebot.holdingInstId !== 'BTC-USDT') {
+        await this.executePurchaseStrategy(tradebot, 'ETH-USDT');
+      }
+      if (tradebot.holdingInstId !== 'ETH-USDT') {
+        await this.executePurchaseStrategy(tradebot, 'BTC-USDT');
+      }
+      if (tradebot.holdingStatus !== 'WAIT') {
+        await this.executeCloseStrategy(tradebot);
+      }
+    }, 1000 * 5);
   }
 }
