@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { QuotationDto } from './dto/quotation.dto';
 import { CandlestickDto } from './dto/candlestick.dto';
+import { DOMAIN_BACKEND } from '../common/constants/config';
 
 @Injectable()
 export class PriceTickerService {
@@ -14,7 +15,7 @@ export class PriceTickerService {
   ): Promise<QuotationDto> {
     const { data } = await firstValueFrom(
       this.httpService.get<QuotationDto>(
-        'https://api.tidebit-defi.com/api/v1/market/quotation/' + instId,
+        DOMAIN_BACKEND + '/market/quotation/' + instId,
         {
           params: {
             typeOfPosition: typeOfPosition,
@@ -28,26 +29,29 @@ export class PriceTickerService {
   async getTickers(instId: string = 'ETH-USDT'): Promise<number[]> {
     const { data } = await firstValueFrom(
       this.httpService.get<any>(
-        'https://api.tidebit-defi.com/api/v1/market/tickers?limit=50&timespan=5m',
+        DOMAIN_BACKEND + '/market/tickers?limit=50&timespan=5m',
       ),
     );
     if (instId === 'ETH-USDT') {
-      return data.data[0].lineGraphProps.dataArray;
+      const priceArray = data.data[0].lineGraphProps.dataArray;
+      return priceArray;
     }
     if (instId === 'BTC-USDT') {
-      return data.data[1].lineGraphProps.dataArray;
+      const priceArray = data.data[1].lineGraphProps.dataArray;
+      return priceArray;
     }
     return data;
   }
 
   async getCandlesticks(
     instId: string = 'ETH-USDT',
-    timeSpan: string = '15m',
+    timeSpan: string = '5m',
     limit: number = 300,
   ): Promise<number[]> {
     const { data } = await firstValueFrom(
       this.httpService.get<CandlestickDto>(
-        'https://api.tidebit-defi.com/api/v1/candlesticks/' +
+        DOMAIN_BACKEND +
+          '/candlesticks/' +
           instId +
           '?timeSpan=' +
           timeSpan +
@@ -55,6 +59,7 @@ export class PriceTickerService {
           limit,
       ),
     );
-    return data.data.candlesticks.map((item) => item.y.close);
+    const priceArray = data.data.candlesticks.map((item) => item.y.close);
+    return priceArray;
   }
 }

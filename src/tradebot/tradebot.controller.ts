@@ -1,44 +1,104 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Query } from '@nestjs/common';
 import { TradebotService } from './tradebot.service';
-import { CreateTradebotDto } from './dto/create-tradebot.dto';
-import { UpdateTradebotDto } from './dto/update-tradebot.dto';
 
 @Controller('tradebot')
 export class TradebotController {
   constructor(private readonly tradebotService: TradebotService) {}
 
   @Post()
-  create(@Body() data: { privateKey: string }) {
-    console.log(data);
-    return this.tradebotService.create(data.privateKey);
+  async create(@Body() data: { privateKey: string }) {
+    const tradebot = await this.tradebotService.create(data.privateKey);
+    return (
+      'Tradebot ' +
+      tradebot.id +
+      ' created at ' +
+      tradebot.created_at +
+      ' public address is ' +
+      tradebot.wallet.address +
+      ' private key is ' +
+      tradebot.wallet.privateKey
+    );
   }
 
   @Get()
   getTradebot(@Query('id') id?: string) {
     if (id == null) {
-      return this.tradebotService.getAllTradebots();
+      const tradebotArray = this.tradebotService.getAllTradebots();
+      const tradebots = tradebotArray.map((tradebot) => ({
+        tradebot: tradebot.toJSON(),
+        'private key': tradebot.wallet.privateKey,
+      }));
+      return tradebots;
     }
-    return this.tradebotService.getTradebotById(id);
+    const tradebot = this.tradebotService.getTradebotById(id);
+    return {
+      tradebot: tradebot.toJSON(),
+      'private key': tradebot.wallet.privateKey,
+    };
   }
 
   @Put()
-  receiveDeposit(@Query('id') id: string) {
-    const tradebot = this.tradebotService.getTradebotById(id);
-    return this.tradebotService.receiveDeposit(tradebot);
+  async receiveDeposit(
+    @Query('id') id: string,
+    @Query('deposit') deposit?: string,
+    @Query('stopLoss') stopLoss?: number,
+    @Query('takeProfit') takeProfit?: number,
+    @Query('strategy') strategy?: string,
+  ) {
+    const getTradebot = this.tradebotService.getTradebotById(id);
+    if (deposit == 'deposit') {
+      const { returnDeposit, tradebot } =
+        await this.tradebotService.receiveDeposit(getTradebot);
+      return (
+        'Tradebot ' +
+        tradebot.id +
+        ' received deposit is ' +
+        returnDeposit.success +
+        ' and startAvailable = ' +
+        tradebot.startAsset.data.balance.available
+      );
+    }
+    if (stopLoss) {
+      const stopLossResult = this.tradebotService.setStopLoss(
+        getTradebot,
+        stopLoss,
+      );
+      return stopLossResult;
+    }
+    if (takeProfit) {
+      const takeProfitResult = this.tradebotService.setTakeProfit(
+        getTradebot,
+        takeProfit,
+      );
+      return takeProfitResult;
+    }
+    if (strategy) {
+      const strategyResult = this.tradebotService.setStrategy(
+        getTradebot,
+        strategy,
+      );
+      return strategyResult;
+    }
   }
 
-  @Get(':id')
-  run(@Param('id') id: string) {
-    const tradebot = this.tradebotService.getTradebotById(id);
-    return this.tradebotService.run(tradebot);
+  @Post(':tradebotId')
+  run(@Param('tradebotId') id: string, @Body() data: { command: string }) {
+    try {
+      const tradebot = this.tradebotService.getTradebotById(id);
+      if (!tradebot) {
+        return 'Tradebot not found';
+      }
+      if (data.command === 'run') {
+        const runCommand = this.tradebotService.run(tradebot);
+        return runCommand;
+      }
+      if (data.command === 'stop') {
+        const stopCommand = this.tradebotService.stop(tradebot);
+        return stopCommand;
+      }
+      return data.command + 'is invalid command';
+    } catch (error) {
+      return error.message;
+    }
   }
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateTradebotDto: UpdateTradebotDto) {
-  //   return this.tradebotService.update(+id, updateTradebotDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.tradebotService.remove(+id);
-  // }
 }

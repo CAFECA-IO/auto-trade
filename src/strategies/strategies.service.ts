@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as ARIMA from 'arima';
-import { QuotationDto } from 'src/price_ticker/dto/quotation.dto';
 
 @Injectable()
 export class StrategiesService {
@@ -9,72 +8,122 @@ export class StrategiesService {
     const arima = new ARIMA('auto');
     arima.train(priceArray);
     const AbsspreadFee = Math.abs(spreadFee);
-    const arimaPredict = arima.predict(50);
+    const arimaPredict = arima.predict(15);
     const predict: number[] = arimaPredict[0];
     const predictMax = Math.max(...predict);
     const predictMin = Math.min(...predict);
-    const lastPrice = priceArray[priceArray.length - 1];
-    if (predictMax - lastPrice > AbsspreadFee * 1.5) {
+    const currentPrice = priceArray[priceArray.length - 1];
+    if (predictMax - currentPrice > AbsspreadFee * 2.5) {
       suggestion = 'BUY';
       return suggestion;
     }
-    if (lastPrice - predictMin > AbsspreadFee * 1.5) {
+    if (currentPrice - predictMin > AbsspreadFee * 2.5) {
       suggestion = 'SELL';
       return suggestion;
     }
     return suggestion;
   }
-  purchaseStrategy(suggestion: string, holdingStatus: string) {
-    if (suggestion === 'BUY') {
-      if (holdingStatus === 'WAIT') {
-        return 'BUY';
-      }
-      if (holdingStatus === 'SELL') {
-        return 'CLOSE';
-      }
-      if (holdingStatus === 'BUY') {
-        return 'WAIT';
-      }
-    }
-    if (suggestion === 'SELL') {
-      if (holdingStatus === 'WAIT') {
-        return 'SELL';
-      }
-      if (holdingStatus === 'BUY') {
-        return 'CLOSE';
-      }
-      if (holdingStatus === 'SELL') {
-        return 'WAIT';
-      }
-    }
-  }
 
-  closeStrategy(
-    openPrice: number,
-    currentPrice: number,
-    spreadFee: number,
+  executeStrategy(
+    suggestion: string,
     holdingStatus: string,
+    openPrice?: number,
+    currentPrice?: number,
+    openSpreadFee?: number,
+    stopLoss?: number,
+    takeProfit?: number,
   ) {
-    const AbsspreadFee = Math.abs(spreadFee);
+    const AbsOpenSpreadFee = Math.abs(openSpreadFee);
+    if (holdingStatus === 'WAIT') {
+      return suggestion;
+    }
     if (holdingStatus === 'BUY') {
-      if (currentPrice - openPrice > AbsspreadFee * 2) {
+      if (
+        suggestion === 'SELL' ||
+        currentPrice - openPrice > AbsOpenSpreadFee * takeProfit ||
+        openPrice - currentPrice > AbsOpenSpreadFee * stopLoss
+      ) {
         return 'CLOSE';
       }
-      if (openPrice - currentPrice < AbsspreadFee * -0.5) {
-        return 'CLOSE';
-      }
-      return 'WAIT';
     }
     if (holdingStatus === 'SELL') {
-      if (openPrice - currentPrice < AbsspreadFee * -2) {
+      if (
+        suggestion === 'BUY' ||
+        openPrice - currentPrice > AbsOpenSpreadFee * takeProfit ||
+        currentPrice - openPrice > AbsOpenSpreadFee * stopLoss
+      ) {
         return 'CLOSE';
       }
-      if (currentPrice - openPrice > AbsspreadFee * 0.5) {
-        return 'CLOSE';
-      }
-      return 'WAIT';
     }
     return 'WAIT';
   }
-  backTest() {}
+  backTesting(stopLoss, takeProfit, data) {
+    let holdingStatus = 'WAIT';
+    let openPrice;
+    let openSpreadFee;
+    const priceArray: number[] = data;
+    const tradeArray = [];
+    for (let index = 30; index < priceArray.length; index++) {
+      const currentPrice = priceArray[index];
+      const suggestion = this.autoARIMASuggestion(
+        priceArray.slice(index - 30, index),
+        0.005 * currentPrice,
+      );
+      const tradeStrategy = this.executeStrategy(
+        suggestion,
+        holdingStatus,
+        openPrice,
+        currentPrice,
+        openSpreadFee,
+        stopLoss,
+        takeProfit,
+      );
+      if (tradeStrategy === 'CLOSE') {
+        if (holdingStatus === 'BUY') {
+          const profit = currentPrice - openPrice;
+          tradeArray.push({
+            // date: dateArray[index],
+            openPrice: openPrice,
+            price: currentPrice,
+            openSpreadFee: openSpreadFee,
+            profit: profit,
+            tradeStrategy: 'CLOSE-BUY',
+          });
+        }
+        if (holdingStatus === 'SELL') {
+          const profit = openPrice - currentPrice;
+          tradeArray.push({
+            // date: dateArray[index],
+            openPrice: openPrice,
+            price: currentPrice,
+            profit: profit,
+            openSpreadFee: openSpreadFee,
+            tradeStrategy: 'CLOSE-SELL',
+          });
+        }
+        holdingStatus = 'WAIT';
+        openPrice = null;
+        openSpreadFee = null;
+      }
+      if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
+        holdingStatus = tradeStrategy;
+        openSpreadFee = 0.005 * currentPrice;
+        if (holdingStatus === 'BUY') {
+          openPrice = currentPrice + openSpreadFee;
+        }
+        if (holdingStatus === 'SELL') {
+          openPrice = currentPrice - openSpreadFee;
+        }
+        tradeArray.push({
+          // date: dateArray[index],
+          openPrice: openPrice,
+          price: currentPrice,
+          profit: 0,
+          openSpreadFee: openSpreadFee,
+          tradeStrategy: tradeStrategy,
+        });
+      }
+    }
+    return { tradeArray };
+  }
 }

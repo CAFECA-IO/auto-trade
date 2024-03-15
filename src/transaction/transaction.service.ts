@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateDepositDto } from './dto/createDeposit.dto';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { Deposit } from './entities/deposit.entity';
-import { CFDOrder } from './entities/CFDOrder.entity';
+import { ReturnDeposit } from './dto/returnDeposit.dto';
 import CFDOrderCreate from '../common/constants/contracts/cfd_create';
 import { SignTypedDataVersion, signTypedData } from '@metamask/eth-sig-util';
 import { CreateCFDOrderDTO } from './dto/createCFDOrder.dto';
@@ -13,21 +12,23 @@ import { getTimestamp } from '../common/common';
 import { CloseCFDOrderDto } from './dto/closeCFDOrder.dto';
 import CFDOrderClose from '../common/constants/contracts/cfd_close';
 import { MarginDto } from './dto/margin.dto';
-import { ReturnCFDOrderDto } from './dto/returnCFDOrder.dto';
+import { ReturnCloseCFDOrderDto } from './dto/returnCloseCFDOrder.dto';
+import { ReturnCreateCFDOrderDto } from './dto/returnCreateCFDOrder.dto';
+import { DOMAIN_BACKEND } from 'src/common/constants/config';
 
 @Injectable()
 export class TransactionService {
   constructor(private readonly httpService: HttpService) {}
 
-  async deposit(dewt: string, amount: number = 100): Promise<Deposit> {
+  async deposit(dewt: string, amount: number = 100): Promise<ReturnDeposit> {
     const createDepositDto = new CreateDepositDto();
     createDepositDto.blockchain = 'ETH';
     createDepositDto.txhash = '0x123';
     createDepositDto.targetAsset = 'USDT';
     createDepositDto.targetAmount = amount;
     const { data } = await firstValueFrom(
-      this.httpService.post<Deposit>(
-        'https://api.tidebit-defi.com/api/v1/users/deposit',
+      this.httpService.post<ReturnDeposit>(
+        DOMAIN_BACKEND + '/users/deposit',
         createDepositDto,
         {
           headers: {
@@ -45,7 +46,7 @@ export class TransactionService {
     privatekey: string,
     quotation: QuotationDto,
     amount: number,
-  ): Promise<ReturnCFDOrderDto> {
+  ): Promise<ReturnCreateCFDOrderDto> {
     const createCFDDto = new CreateCFDOrderDTO();
     const typeData = CFDOrderCreate;
     createCFDDto.operation = 'CREATE';
@@ -74,8 +75,8 @@ export class TransactionService {
     createCFDDto.createTimestamp = getTimestamp();
     createCFDDto.fee = 0;
     createCFDDto.guaranteedStop = false;
-    const typeDataTemp = JSON.stringify(createCFDDto);
-    typeData.message = JSON.parse(typeDataTemp);
+    // Info: (20240315 - Jacky) this is aim to copy the object without any references
+    typeData.message = JSON.parse(JSON.stringify(createCFDDto));
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
       typeData.message.quotation.price,
       10,
@@ -113,8 +114,8 @@ export class TransactionService {
     });
     const applyData = createCFDDto;
     const { data } = await lastValueFrom(
-      this.httpService.post<any>(
-        'https://api.tidebit-defi.com/api/v1/users/cfds/create',
+      this.httpService.post<ReturnCreateCFDOrderDto>(
+        DOMAIN_BACKEND + '/users/cfds/create',
         { applyData: applyData, userSignature: eip712signature },
         {
           headers: {
@@ -131,7 +132,7 @@ export class TransactionService {
     privatekey: string,
     quotation: QuotationDto,
     referenceId: string,
-  ): Promise<ReturnCFDOrderDto> {
+  ): Promise<ReturnCloseCFDOrderDto> {
     const closeCFDOrderDto = new CloseCFDOrderDto();
     const typeData = CFDOrderClose;
     closeCFDOrderDto.operation = 'CLOSE';
@@ -141,8 +142,8 @@ export class TransactionService {
     closeCFDOrderDto.closePrice = quotation.data.price;
     closeCFDOrderDto.closedType = 'BY_USER';
     closeCFDOrderDto.closeTimestamp = getTimestamp();
-    const typeDataTemp = JSON.stringify(closeCFDOrderDto);
-    typeData.message = JSON.parse(typeDataTemp);
+    // Info: (20240315 - Jacky) this is aim to copy the object without any references
+    typeData.message = JSON.parse(JSON.stringify(closeCFDOrderDto));
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
       quotation.data.price,
       10,
@@ -165,8 +166,8 @@ export class TransactionService {
     });
     const { data } = await lastValueFrom(
       //should be put
-      this.httpService.put<any>(
-        'https://api.tidebit-defi.com/api/v1/users/cfds/close',
+      this.httpService.put<ReturnCloseCFDOrderDto>(
+        DOMAIN_BACKEND + '/users/cfds/close',
         { applyData: closeCFDOrderDto, userSignature: eip712signature },
         {
           headers: {
@@ -178,8 +179,8 @@ export class TransactionService {
     );
     return data;
   }
-  calculateAmount(price: number): number {
-    const nearest = (100 / (price / 5) - 0.01).toFixed(2);
+  calculateAmount(balance: number, price: number): number {
+    const nearest = (balance / (price / 5)).toFixed(4);
     return Number(nearest);
   }
 }

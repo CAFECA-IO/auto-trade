@@ -1,21 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { myAsset } from './entities/myAsset.entity';
-import { HistoryList } from './entities/history.entity';
+import { myAsset } from './dto/myAsset.dto';
+import { HistoryList } from './dto/history.dto';
 import { HDNodeWallet, ethers } from 'ethers';
-import CFDOrderCreate from '../common/constants/contracts/cfd_create';
+import { DOMAIN_BACKEND } from 'src/common/constants/config';
 
 @Injectable()
 export class UserService {
   private readonly TBDBackendUrl: string;
-  constructor(private readonly httpService: HttpService) {
-    this.TBDBackendUrl = 'https://api.tidebit-defi.com/api/v1/';
-  }
+  constructor(private readonly httpService: HttpService) {}
   async registerUser(address: string, dewt: string): Promise<any> {
     const { data } = await firstValueFrom(
       this.httpService.post(
-        this.TBDBackendUrl + 'dewt',
+        DOMAIN_BACKEND + '/dewt',
         { address: address, deWT: dewt },
         {
           headers: {
@@ -29,7 +27,7 @@ export class UserService {
   }
   async getMyAsset(dewt: string): Promise<myAsset> {
     const { data } = await firstValueFrom(
-      this.httpService.get<myAsset>(this.TBDBackendUrl + 'users/assets', {
+      this.httpService.get<myAsset>(DOMAIN_BACKEND + '/users/assets', {
         headers: {
           'Content-Type': 'application/json',
           Dewt: dewt,
@@ -41,7 +39,7 @@ export class UserService {
   async listHistories(dewt: string, limit: string = '3'): Promise<HistoryList> {
     const { data } = await firstValueFrom(
       this.httpService.get<HistoryList>(
-        this.TBDBackendUrl + 'bolt-transactions/history?limit=' + limit,
+        DOMAIN_BACKEND + '/bolt-transactions/history?limit=' + limit,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -52,7 +50,6 @@ export class UserService {
     );
     return data;
   }
-  async getCFDTrade(dewt: string, id: string): Promise<any> {}
   createWallet(): HDNodeWallet {
     const randomWallet = ethers.Wallet.createRandom();
     return randomWallet;
