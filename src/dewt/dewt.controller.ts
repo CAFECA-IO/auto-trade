@@ -7,8 +7,7 @@ export class DewtController {
 
   @Post()
   create(@Body() data: { address: string; privateKey: string }) {
-    console.log(data);
-    return this.dewtService.create(data.address, data.privateKey);
+    const dewt = this.dewtService.create(data.address, data.privateKey);
+    return dewt;
   }
-
 }
