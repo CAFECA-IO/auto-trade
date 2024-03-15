@@ -1,3 +1,4 @@
+export const DOMAIN_BACKEND = 'https://api.tidebit-defi.com/api/v1';
 export const SERVICE_TERM_TITLE = 'ServiceTerm';
 export const DOMAIN = 'https://tidebit-defi.com';
 export const TERM_OF_SERVICE = DOMAIN + '{hash}';

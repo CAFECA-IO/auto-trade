@@ -1,47 +1,37 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionService } from './transaction.service';
-import { Deposit } from './entities/deposit.entity';
-import { CreateDepositDto } from './dto/createDeposit.dto';
 import { HttpModule } from '@nestjs/axios';
 import { PriceTickerModule } from '../price_ticker/price_ticker.module';
-import { CreateCFDOrderDTO } from './dto/createCFDOrder.dto';
 import { PriceTickerService } from '../price_ticker/price_ticker.service';
-import { UserModule } from '../user/user.module';
-import { UserService } from '../user/user.service';
-import { getTimestamp } from '../common/common';
-import { SafeMath } from '../common/safe_math';
-import { QuotationDto } from 'src/price_ticker/dto/quotation.dto';
 
 describe('TransactionService', () => {
   let transactionService: TransactionService;
   let priceTickerService: PriceTickerService;
-  let userService: UserService;
   let DEWT: string;
   let privateKey: string;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [PriceTickerModule, HttpModule, UserModule],
-      providers: [TransactionService, PriceTickerService, UserService],
+      imports: [PriceTickerModule, HttpModule],
+      providers: [TransactionService, PriceTickerService],
     }).compile();
 
     transactionService = module.get<TransactionService>(TransactionService);
     priceTickerService = module.get<PriceTickerService>(PriceTickerService);
-    userService = module.get<UserService>(UserService);
     DEWT =
-      'f8848b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d94ae9e40094e03414cc97773cdc78d3ce6103bd66a8465f299cb8465f1484b.916278169bc851d4d1f515b900f3294b47517f1835525709fae14849608171b4588f5facea7ec910b5b055feadecea2e5d005a46bf17f07d8940b7972aecb5461b';
+      'f8848b536572766963655465726d9868747470733a2f2f746964656269742d646566692e636f6df83e9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d9e68747470733a2f2f746964656269742d646566692e636f6d7b686173687d947df0ddb74cc890cf00a21d4861303b54e21ecbea8465f562d58465f41155.74ff998fd17ea5d9370ca72ab23499efc6f3ea2cfefb018cd149c37f5f5bf828381df48520a1ceca1caff066eed164c6e855f5ec9d84ee895506518585fb69321b';
     privateKey =
-      '54405e07a12ece2ff6abcf56b955343b671ba2913bae5474433ee03aa5b912d9';
+      '9fbe1e99f1649be1160ec2442537ebd86cd09061582c6f3cd0a3ca5144fae2d7';
   });
 
   it('should be deposit', async () => {
     const deposit = await transactionService.deposit(DEWT);
     console.log(deposit);
-    // expect(service).toBeDefined();
+    // expect(deposit.success).toBeTruthy();
   });
   it('should create CFD order', async () => {
     const typeOfPosition = 'SELL';
-    // should fake a quotation
+    // Info: (20240315 Jacky) should fake an API return
     const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
     const amount = 0.03;
     const createCFDTrade = await transactionService.createCFDOrder(
@@ -50,23 +40,23 @@ describe('TransactionService', () => {
       quotation,
       amount,
     );
-    console.log(createCFDTrade);
+    expect(createCFDTrade.success).toBeTruthy();
   });
 
   it('should close CFD order', async () => {
-    // should fake a quotation
-    const typeOfPosition = 'BUY';
+    // Info: (20240315 Jacky) should fake an API return
+    const typeOfPosition = 'SELL';
     const quotation = await priceTickerService.getCFDQuotation(typeOfPosition);
     const closeCFDOrder = await transactionService.closeCFDOrder(
       DEWT,
       privateKey,
       quotation,
-      '0x78ff8bc97857e6e49bc84ccf4c59191d',
+      '0xa06887cae3b99c21c3e6c5788b261505',
     );
-    console.log(closeCFDOrder);
+    expect(closeCFDOrder.success).toBeTruthy();
   });
   it('should calculate amount', async () => {
-    const amount = transactionService.calculateAmount(4000);
-    console.log(amount);
+    const amount = transactionService.calculateAmount(100, 73205);
+    expect(amount).toBe(0.0068);
   });
 });

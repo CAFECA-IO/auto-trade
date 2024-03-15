@@ -1,4 +1,4 @@
-export class Deposit {
+export class ReturnDeposit {
   success: boolean;
   code: string;
   reason: string;

@@ -9,7 +9,14 @@ import { TradebotModule } from './tradebot/tradebot.module';
 import { StrategiesModule } from './strategies/strategies.module';
 
 @Module({
-  imports: [UserModule, PriceTickerModule, DewtModule, TransactionModule, TradebotModule, StrategiesModule],
+  imports: [
+    UserModule,
+    PriceTickerModule,
+    DewtModule,
+    TransactionModule,
+    TradebotModule,
+    StrategiesModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

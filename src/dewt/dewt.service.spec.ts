@@ -19,9 +19,9 @@ describe('DewtService', () => {
   });
 
   it('should return a dewt', async () => {
-    const address = '0xF1cbCfee8e05549B8E6c6192216193D389fe49aE';
+    const address = '0xa0a78676E23c82516De3e4C058a2A9809C42cf8c';
     const privateKey =
-      '496d0910854c0140df89ed3271084a93ffe9b91bbe8b05c36ee74e646bd02f38';
+      'ed7f7f08cce6e0455d97c4eb2e51d2899cc8ce0bdc92c8701584ff816eb86976';
     const dewt = await service.create(address, privateKey);
     console.log(dewt);
   });
