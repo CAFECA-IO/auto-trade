@@ -78,7 +78,11 @@ describe('TradebotService', () => {
   it('should execute trade strategy', async () => {
     const tradebot = await service.create(privateKey);
     await service.receiveDeposit(tradebot);
-    const result = await service.executeStrategy(tradebot, 'ETH-USDT');
+    const result = await service.executeStrategy(
+      'autoArima',
+      tradebot,
+      'ETH-USDT',
+    );
     expect(result).toBeDefined();
   });
 });

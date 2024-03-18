@@ -1,88 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import * as ARIMA from 'arima';
 
 @Injectable()
 export class StrategiesService {
-  autoARIMASuggestion(priceArray: number[], spreadFee: number) {
-    let suggestion = 'WAIT';
-    const arima = new ARIMA('auto');
-    arima.train(priceArray);
-    const AbsspreadFee = Math.abs(spreadFee);
-    const arimaPredict = arima.predict(15);
-    const predict: number[] = arimaPredict[0];
-    const predictMax = Math.max(...predict);
-    const predictMin = Math.min(...predict);
-    const currentPrice = priceArray[priceArray.length - 1];
-    if (predictMax - currentPrice > AbsspreadFee * 2.5) {
-      suggestion = 'BUY';
-      return suggestion;
-    }
-    if (currentPrice - predictMin > AbsspreadFee * 2.5) {
-      suggestion = 'SELL';
-      return suggestion;
-    }
+  async getSuggestion(strategyName: string, data: Record<string, any>) {
+    const strategyModule = await import('./strategy/' + strategyName);
+    const suggestion = await strategyModule.getSuggestion(data);
     return suggestion;
   }
 
-  executeStrategy(
-    suggestion: string,
-    holdingStatus: string,
-    openPrice?: number,
-    currentPrice?: number,
-    openSpreadFee?: number,
-    stopLoss?: number,
-    takeProfit?: number,
-  ) {
-    const AbsOpenSpreadFee = Math.abs(openSpreadFee);
-    if (holdingStatus === 'WAIT') {
-      return suggestion;
-    }
-    if (holdingStatus === 'BUY') {
-      if (
-        suggestion === 'SELL' ||
-        currentPrice - openPrice > AbsOpenSpreadFee * takeProfit ||
-        openPrice - currentPrice > AbsOpenSpreadFee * stopLoss
-      ) {
-        return 'CLOSE';
-      }
-    }
-    if (holdingStatus === 'SELL') {
-      if (
-        suggestion === 'BUY' ||
-        openPrice - currentPrice > AbsOpenSpreadFee * takeProfit ||
-        currentPrice - openPrice > AbsOpenSpreadFee * stopLoss
-      ) {
-        return 'CLOSE';
-      }
-    }
-    return 'WAIT';
+  async getTradeStrategy(strategyName: string, data: Record<string, any>) {
+    const strategyModule = await import('./strategy/' + strategyName);
+    const tradeStrategy = await strategyModule.tradeStrategy(data);
+    return tradeStrategy;
   }
-  backTesting(stopLoss, takeProfit, data) {
+
+  async getTakeProfit(strategyName: string, data: Record<string, any>) {
+    const strategyModule = await import('./strategy/' + strategyName);
+    const takeProfit = await strategyModule.takeProfit(data);
+    return takeProfit;
+  }
+
+  async getStopLoss(strategyName: string, data: Record<string, any>) {
+    const strategyModule = await import('./strategy/' + strategyName);
+    const stopLoss = await strategyModule.stopLoss(data);
+    return stopLoss;
+  }
+  async backTesting(strategyName, stopLoss, takeProfit, priceData) {
     let holdingStatus = 'WAIT';
     let openPrice;
     let openSpreadFee;
-    const priceArray: number[] = data;
+    const priceArray: number[] = priceData;
     const tradeArray = [];
     for (let index = 30; index < priceArray.length; index++) {
       const currentPrice = priceArray[index];
-      const suggestion = this.autoARIMASuggestion(
-        priceArray.slice(index - 30, index),
-        0.005 * currentPrice,
-      );
-      const tradeStrategy = this.executeStrategy(
-        suggestion,
-        holdingStatus,
-        openPrice,
-        currentPrice,
-        openSpreadFee,
-        stopLoss,
-        takeProfit,
-      );
-      if (tradeStrategy === 'CLOSE') {
+      const spreadFee = 0.005 * currentPrice;
+      let stopLossResult;
+      let takeProfitResult;
+      const suggestion = await this.getSuggestion(strategyName, {
+        priceArray: priceArray.slice(index - 30, index),
+        spreadFee: spreadFee,
+      });
+      const tradeStrategy = await this.getTradeStrategy(strategyName, {
+        suggestion: suggestion,
+        holdingStatus: holdingStatus,
+      });
+      if (holdingStatus !== 'WAIT') {
+        stopLossResult = await this.getStopLoss(strategyName, {
+          openPrice: openPrice,
+          currentPrice: currentPrice,
+          spreadFee: spreadFee,
+          holdingStatus: holdingStatus,
+          stopLossLeverage: stopLoss,
+        });
+        takeProfitResult = await this.getTakeProfit(strategyName, {
+          openPrice: openPrice,
+          currentPrice: currentPrice,
+          spreadFee: spreadFee,
+          holdingStatus: holdingStatus,
+          takeProfitLeverage: takeProfit,
+        });
+      }
+      if (
+        tradeStrategy === 'CLOSE' ||
+        stopLossResult === 'CLOSE' ||
+        takeProfitResult === 'CLOSE'
+      ) {
         if (holdingStatus === 'BUY') {
           const profit = currentPrice - openPrice;
           tradeArray.push({
-            // date: dateArray[index],
             openPrice: openPrice,
             price: currentPrice,
             openSpreadFee: openSpreadFee,
@@ -93,7 +78,6 @@ export class StrategiesService {
         if (holdingStatus === 'SELL') {
           const profit = openPrice - currentPrice;
           tradeArray.push({
-            // date: dateArray[index],
             openPrice: openPrice,
             price: currentPrice,
             profit: profit,
@@ -107,7 +91,7 @@ export class StrategiesService {
       }
       if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
         holdingStatus = tradeStrategy;
-        openSpreadFee = 0.005 * currentPrice;
+        openSpreadFee = spreadFee;
         if (holdingStatus === 'BUY') {
           openPrice = currentPrice + openSpreadFee;
         }
@@ -115,7 +99,6 @@ export class StrategiesService {
           openPrice = currentPrice - openSpreadFee;
         }
         tradeArray.push({
-          // date: dateArray[index],
           openPrice: openPrice,
           price: currentPrice,
           profit: 0,

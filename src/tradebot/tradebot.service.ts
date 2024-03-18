@@ -105,7 +105,11 @@ export class TradebotService {
       );
     }
   }
-  async executeStrategy(tradebot: Tradebot, instId: string) {
+  async executeStrategy(
+    strategyName: string,
+    tradebot: Tradebot,
+    instId: string,
+  ) {
     this.logger.log(
       'Tradebot ' +
         tradebot.id +
@@ -125,21 +129,43 @@ export class TradebotService {
         );
       }
       const priceArray = await this.priceTickerService.getCandlesticks(instId);
-      const suggestion = this.strategiesService.autoARIMASuggestion(
-        priceArray,
-        quotation.data.spreadFee,
+      const suggestion = await this.strategiesService.getSuggestion(
+        strategyName,
+        {
+          priceArray: priceArray,
+          spreadFee: quotation.data.spreadFee,
+        },
+      );
+      const tradeStrategy = await this.strategiesService.getTradeStrategy(
+        strategyName,
+        {
+          suggestion: suggestion,
+          holdingStatus: tradebot.holdingStatus,
+        },
       );
       const currentPrice = priceArray[priceArray.length - 1];
-      const tradeStrategy = this.strategiesService.executeStrategy(
-        suggestion,
-        tradebot.holdingStatus,
-        tradebot.openPrice,
-        currentPrice,
-        tradebot.absSpreadFee,
-        tradebot.stopLoss,
-        tradebot.takeProfit,
+      const takeProfit = await this.strategiesService.getTakeProfit(
+        strategyName,
+        {
+          openPrice: tradebot.openPrice,
+          currentPrice: currentPrice,
+          spreadFee: quotation.data.spreadFee,
+          holdingStatus: tradebot.holdingStatus,
+          takeProfitLeverage: tradebot.takeProfit,
+        },
       );
-      if (tradeStrategy === 'CLOSE') {
+      const stopLoss = await this.strategiesService.getStopLoss(strategyName, {
+        openPrice: tradebot.openPrice,
+        currentPrice: currentPrice,
+        spreadFee: quotation.data.spreadFee,
+        holdingStatus: tradebot.holdingStatus,
+        stopLossLeverage: tradebot.stopLoss,
+      });
+      if (
+        tradeStrategy === 'CLOSE' ||
+        takeProfit === 'CLOSE' ||
+        stopLoss === 'CLOSE'
+      ) {
         tradebot.dewt = await this.dewtService.create(
           tradebot.wallet.address,
           tradebot.wallet.privateKey.slice(2),
@@ -237,7 +263,7 @@ export class TradebotService {
     }
   }
 
-  async run(tradebot: Tradebot) {
+  async run(strategyName: string, tradebot: Tradebot) {
     if (tradebot.isRunning) {
       this.logger.log('Tradebot ' + tradebot.id + ' is already running');
       return 'Tradebot ' + tradebot.id + ' is already running';
@@ -246,13 +272,13 @@ export class TradebotService {
     tradebot.timer = setInterval(async () => {
       this.logger.log('Tradebot ' + tradebot.id + ' is running');
       if (tradebot.holdingInstId !== 'BTC-USDT') {
-        await this.executeStrategy(tradebot, 'ETH-USDT');
+        await this.executeStrategy(strategyName, tradebot, 'ETH-USDT');
       }
       if (
         tradebot.holdingInstId !== 'ETH-USDT' &&
         tradebot.currentAsset.data.balance.available > 250
       ) {
-        await this.executeStrategy(tradebot, 'BTC-USDT');
+        await this.executeStrategy(strategyName, tradebot, 'BTC-USDT');
       }
     }, 1000 * 15);
     this.logger.log('Tradebot ' + tradebot.id + ' start running');
