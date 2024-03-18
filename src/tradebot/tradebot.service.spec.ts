@@ -64,15 +64,14 @@ describe('TradebotService', () => {
   });
 
   it('should get tradebot by id', async () => {
-    const creatTradebot = await service.create(privateKey);
-    const returnTradebot = service.getTradebotById(creatTradebot.id);
-    // will wrong because trade bot live in memory now
-    expect(returnTradebot).toBe(creatTradebot);
+    const createTradebot = await service.create(privateKey);
+    const returnTradebot = service.getTradebotById(createTradebot.id);
+    expect(returnTradebot).toBe(createTradebot);
   });
 
   it('should receive deposit for tradebot', async () => {
-    const tradebot = service.getTradebotById('jehrgl');
-    const result = await service.receiveDeposit(tradebot);
+    const createTradebot = await service.create(privateKey);
+    const result = await service.receiveDeposit(createTradebot);
     expect(result.returnDeposit.success).toBeTruthy();
   });
 

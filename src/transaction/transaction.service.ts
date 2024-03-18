@@ -14,7 +14,7 @@ import CFDOrderClose from '../common/constants/contracts/cfd_close';
 import { MarginDto } from './dto/margin.dto';
 import { ReturnCloseCFDOrderDto } from './dto/returnCloseCFDOrder.dto';
 import { ReturnCreateCFDOrderDto } from './dto/returnCreateCFDOrder.dto';
-import { DOMAIN_BACKEND } from 'src/common/constants/config';
+import { DOMAIN_BACKEND } from '../common/constants/config';
 
 @Injectable()
 export class TransactionService {
