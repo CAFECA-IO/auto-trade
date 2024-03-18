@@ -7,7 +7,9 @@ export class TradebotController {
 
   @Post()
   async create(@Body() data: { privateKey: string }) {
-    const tradebot = await this.tradebotService.create(data.privateKey);
+    const createTradebot = await this.tradebotService.create(data.privateKey);
+    const { returnDeposit, tradebot } =
+      await this.tradebotService.receiveDeposit(createTradebot);
     return (
       'Tradebot ' +
       tradebot.id +
@@ -16,7 +18,11 @@ export class TradebotController {
       ' public address is ' +
       tradebot.wallet.address +
       ' private key is ' +
-      tradebot.wallet.privateKey
+      tradebot.wallet.privateKey +
+      ' and received deposit is ' +
+      returnDeposit.success +
+      ' and startAvailable = ' +
+      tradebot.startAsset.data.balance.available
     );
   }
 
@@ -38,7 +44,7 @@ export class TradebotController {
   }
 
   @Put()
-  async receiveDeposit(
+  async setTradebot(
     @Query('id') id: string,
     @Query('deposit') deposit?: string,
     @Query('stopLoss') stopLoss?: number,
@@ -82,10 +88,11 @@ export class TradebotController {
   }
 
   @Post(':tradebotId')
-  run(
+  command(
     @Param('tradebotId') id: string,
     @Body() data: { strategy: string; command: string },
   ) {
+
     try {
       const tradebot = this.tradebotService.getTradebotById(id);
       if (!tradebot) {

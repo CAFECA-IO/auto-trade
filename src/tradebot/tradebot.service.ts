@@ -5,7 +5,7 @@ import { DewtService } from '../dewt/dewt.service';
 import { PriceTickerService } from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
-import { QuotationDto } from 'src/price_ticker/dto/quotation.dto';
+import { QuotationDto } from '../price_ticker/dto/quotation.dto';
 
 @Injectable()
 export class TradebotService {
