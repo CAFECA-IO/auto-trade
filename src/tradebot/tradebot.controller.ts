@@ -82,14 +82,17 @@ export class TradebotController {
   }
 
   @Post(':tradebotId')
-  run(@Param('tradebotId') id: string, @Body() data: { command: string }) {
+  run(
+    @Param('tradebotId') id: string,
+    @Body() data: { strategy: string; command: string },
+  ) {
     try {
       const tradebot = this.tradebotService.getTradebotById(id);
       if (!tradebot) {
         return 'Tradebot not found';
       }
       if (data.command === 'run') {
-        const runCommand = this.tradebotService.run(tradebot);
+        const runCommand = this.tradebotService.run(data.strategy, tradebot);
         return runCommand;
       }
       if (data.command === 'stop') {

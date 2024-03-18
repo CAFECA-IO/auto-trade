@@ -29,35 +29,57 @@ describe('StrategiesService', () => {
     );
     const ETHPriceArray = await priceTickerService.getCandlesticks('ETH-USDT');
     const BTCPriceArray = await priceTickerService.getCandlesticks('BTC-USDT');
-    const ETHSuggestion = strategiesService.autoARIMASuggestion(
-      ETHPriceArray,
-      ETHQuotation.data.spreadFee,
-    );
-    const BTCSuggestion = strategiesService.autoARIMASuggestion(
-      BTCPriceArray,
-      BTCQuotation.data.spreadFee,
-    );
+    const ETHSuggestion = await strategiesService.getSuggestion('autoArima', {
+      priceArray: ETHPriceArray,
+      spreadFee: ETHQuotation.data.spreadFee,
+    });
+    const BTCSuggestion = await strategiesService.getSuggestion('autoArima', {
+      priceArray: BTCPriceArray,
+      spreadFee: BTCQuotation.data.spreadFee,
+    });
     console.log(ETHSuggestion);
     console.log(BTCSuggestion);
   });
 
-  it('should run executeStrategy', () => {
+  it('should run executeStrategy', async () => {
     const suggestion = 'BUY';
-    const holdingStatus = 'BUY';
+    const holdingStatus = 'SELL';
+    const result = await strategiesService.getTradeStrategy('autoArima', {
+      suggestion: suggestion,
+      holdingStatus: holdingStatus,
+    });
+    console.log(result);
+  });
+
+  it('should run takeProfit', async () => {
     const openPrice = 100;
-    const currentPrice = 121;
-    const openSpreadFee = 0.1 * openPrice;
-    const stopLoss = 0.7;
-    const takeProfit = 2;
-    const result = strategiesService.executeStrategy(
-      suggestion,
-      holdingStatus,
+    const currentPrice = 120;
+    const spreadFee = 5;
+    const holdingStatus = 'BUY';
+    const takeProfitLeverage = 1;
+    const result = await strategiesService.getTakeProfit('autoArima', {
       openPrice,
       currentPrice,
-      openSpreadFee,
-      stopLoss,
-      takeProfit,
-    );
+      spreadFee,
+      holdingStatus,
+      takeProfitLeverage,
+    });
+    console.log(result);
+  });
+
+  it('should run stopLoss', async () => {
+    const openPrice = 100;
+    const currentPrice = 80;
+    const spreadFee = 5;
+    const holdingStatus = 'BUY';
+    const stopLossLeverage = 3;
+    const result = await strategiesService.getStopLoss('autoArima', {
+      openPrice,
+      currentPrice,
+      spreadFee,
+      holdingStatus,
+      stopLossLeverage,
+    });
     console.log(result);
   });
 
@@ -70,12 +92,17 @@ describe('StrategiesService', () => {
     const closeIndex = 4;
     // const dateIndex = 0;
     // Extract the data from the specified column
-    const columnData = rows.map((row) => {
+    const priceData = rows.map((row) => {
       const columns = row.split(','); // Split by comma (adjust delimiter as necessary)
       return parseFloat(columns[closeIndex]);
     });
-    // console.log(columnData);
-    const { tradeArray } = strategiesService.backTesting(1.7, 2.2, columnData);
+    console.log(priceData);
+    const { tradeArray } = await strategiesService.backTesting(
+      'autoArima',
+      1.6,
+      2.1,
+      priceData,
+    );
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
     console.log('Sum:', sum);
@@ -86,7 +113,8 @@ describe('StrategiesService', () => {
       'ETH-USDT',
       '5m',
     );
-    const { tradeArray } = strategiesService.backTesting(
+    const { tradeArray } = await strategiesService.backTesting(
+      'autoArima',
       1.6,
       2.1,
       ETHPriceArray,
