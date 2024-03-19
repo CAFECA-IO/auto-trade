@@ -29,6 +29,7 @@
     "arima": "^0.2.5",
     "axios": "^1.5.1",
     "bignumber.js": "^9.1.2",
+    "dotenv": "^16.4.5",
     "ethers": "^6.11.1",
     "reflect-metadata": "^0.1.13",
     "rlp": "^3.0.0",

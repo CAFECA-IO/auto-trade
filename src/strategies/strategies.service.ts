@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class StrategiesService {
   async getSuggestion(strategyName: string, data: Record<string, any>) {
     const strategyModule = await import('./strategy/' + strategyName);
-    const suggestion = await strategyModule.getSuggestion(data);
+    const suggestion = await strategyModule.suggestion(data);
     return suggestion;
   }
 
@@ -25,7 +25,7 @@ export class StrategiesService {
     const stopLoss = await strategyModule.stopLoss(data);
     return stopLoss;
   }
-  async backTesting(strategyName, stopLoss, takeProfit, priceData) {
+  async backTesting(suggestion, strategy, stopLoss, takeProfit, priceData) {
     let holdingStatus = 'WAIT';
     let openPrice;
     let openSpreadFee;
@@ -36,28 +36,26 @@ export class StrategiesService {
       const spreadFee = 0.005 * currentPrice;
       let stopLossResult;
       let takeProfitResult;
-      const suggestion = await this.getSuggestion(strategyName, {
+      const suggestionResult = await this.getSuggestion(suggestion, {
         priceArray: priceArray.slice(index - 30, index),
         spreadFee: spreadFee,
       });
-      const tradeStrategy = await this.getTradeStrategy(strategyName, {
-        suggestion: suggestion,
+      const tradeStrategy = await this.getTradeStrategy(strategy, {
+        suggestion: suggestionResult,
         holdingStatus: holdingStatus,
       });
       if (holdingStatus !== 'WAIT') {
-        stopLossResult = await this.getStopLoss(strategyName, {
+        stopLossResult = await this.getStopLoss(stopLoss, {
           openPrice: openPrice,
           currentPrice: currentPrice,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
-          stopLossLeverage: stopLoss,
         });
-        takeProfitResult = await this.getTakeProfit(strategyName, {
+        takeProfitResult = await this.getTakeProfit(takeProfit, {
           openPrice: openPrice,
           currentPrice: currentPrice,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
-          takeProfitLeverage: takeProfit,
         });
       }
       if (

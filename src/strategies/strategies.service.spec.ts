@@ -56,13 +56,11 @@ describe('StrategiesService', () => {
     const currentPrice = 120;
     const spreadFee = 5;
     const holdingStatus = 'BUY';
-    const takeProfitLeverage = 1;
     const result = await strategiesService.getTakeProfit('autoArima', {
       openPrice,
       currentPrice,
       spreadFee,
       holdingStatus,
-      takeProfitLeverage,
     });
     console.log(result);
   });
@@ -72,13 +70,11 @@ describe('StrategiesService', () => {
     const currentPrice = 80;
     const spreadFee = 5;
     const holdingStatus = 'BUY';
-    const stopLossLeverage = 3;
     const result = await strategiesService.getStopLoss('autoArima', {
       openPrice,
       currentPrice,
       spreadFee,
       holdingStatus,
-      stopLossLeverage,
     });
     console.log(result);
   });
@@ -96,11 +92,11 @@ describe('StrategiesService', () => {
       const columns = row.split(','); // Split by comma (adjust delimiter as necessary)
       return parseFloat(columns[closeIndex]);
     });
-    console.log(priceData);
     const { tradeArray } = await strategiesService.backTesting(
       'autoArima',
-      1.6,
-      2.1,
+      'autoArima',
+      'autoArima',
+      'autoArima',
       priceData,
     );
     const profitArray = tradeArray.map((trade) => trade.profit);
@@ -115,8 +111,9 @@ describe('StrategiesService', () => {
     );
     const { tradeArray } = await strategiesService.backTesting(
       'autoArima',
-      1.6,
-      2.1,
+      'autoArima',
+      'autoArima',
+      'autoArima',
       ETHPriceArray,
     );
     const profitArray = tradeArray.map((trade) => trade.profit);

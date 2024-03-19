@@ -3,7 +3,6 @@ import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { myAsset } from './dto/myAsset.dto';
 import { HistoryList } from './dto/history.dto';
-import { HDNodeWallet, ethers } from 'ethers';
 import { DOMAIN_BACKEND } from '../common/constants/config';
 
 @Injectable()
@@ -50,15 +49,6 @@ export class UserService {
     );
     return data;
   }
-  createWallet(): HDNodeWallet {
-    const randomWallet = ethers.Wallet.createRandom();
-    return randomWallet;
-  }
-
-  connectWallet(privateKey: string) {
-    const realWallet = new ethers.Wallet(privateKey);
-    return realWallet;
-  }
-  sendToken() {}
-  receiveToken() {}
+  async sendToken() {}
+  async receiveToken() {}
 }
