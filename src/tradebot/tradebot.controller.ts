@@ -6,8 +6,8 @@ export class TradebotController {
   constructor(private readonly tradebotService: TradebotService) {}
 
   @Post()
-  async create(@Body() data: { privateKey: string }) {
-    const createTradebot = await this.tradebotService.create(data.privateKey);
+  async create() {
+    const createTradebot = await this.tradebotService.create();
     const { returnDeposit, tradebot } =
       await this.tradebotService.receiveDeposit(createTradebot);
     return (
@@ -27,16 +27,16 @@ export class TradebotController {
   }
 
   @Get()
-  getTradebot(@Query('id') id?: string) {
+  async getTradebot(@Query('id') id?: string) {
     if (id == null) {
-      const tradebotArray = this.tradebotService.getAllTradebots();
+      const tradebotArray = await this.tradebotService.getAllTradebots();
       const tradebots = tradebotArray.map((tradebot) => ({
         tradebot: tradebot.toJSON(),
         'private key': tradebot.wallet.privateKey,
       }));
       return tradebots;
     }
-    const tradebot = this.tradebotService.getTradebotById(id);
+    const tradebot = await this.tradebotService.getTradebotById(id);
     return {
       tradebot: tradebot.toJSON(),
       'private key': tradebot.wallet.privateKey,
@@ -44,15 +44,19 @@ export class TradebotController {
   }
 
   @Put()
-  async setTradebot(
+  async updateTradebot(
     @Query('id') id: string,
-    @Query('deposit') deposit?: string,
-    @Query('stopLoss') stopLoss?: number,
-    @Query('takeProfit') takeProfit?: number,
-    @Query('strategy') strategy?: string,
+    @Body()
+    data: {
+      deposit?: string;
+      suggestion?: string;
+      tradeStrategy?: string;
+      stopLoss?: string;
+      takeProfit?: string;
+    },
   ) {
-    const getTradebot = this.tradebotService.getTradebotById(id);
-    if (deposit == 'deposit') {
+    const getTradebot = await this.tradebotService.getTradebotById(id);
+    if (data.deposit) {
       const { returnDeposit, tradebot } =
         await this.tradebotService.receiveDeposit(getTradebot);
       return (
@@ -64,42 +68,48 @@ export class TradebotController {
         tradebot.startAsset.data.balance.available
       );
     }
-    if (stopLoss) {
+    if (data.suggestion) {
+      const suggestionResult = this.tradebotService.setSuggestion(
+        getTradebot,
+        data.suggestion,
+      );
+      return suggestionResult;
+    }
+    if (data.tradeStrategy) {
+      const strategyResult = this.tradebotService.setTradeStrategy(
+        getTradebot,
+        data.tradeStrategy,
+      );
+      return strategyResult;
+    }
+    if (data.stopLoss) {
       const stopLossResult = this.tradebotService.setStopLoss(
         getTradebot,
-        stopLoss,
+        data.stopLoss,
       );
       return stopLossResult;
     }
-    if (takeProfit) {
+    if (data.takeProfit) {
       const takeProfitResult = this.tradebotService.setTakeProfit(
         getTradebot,
-        takeProfit,
+        data.takeProfit,
       );
       return takeProfitResult;
-    }
-    if (strategy) {
-      const strategyResult = this.tradebotService.setStrategy(
-        getTradebot,
-        strategy,
-      );
-      return strategyResult;
     }
   }
 
   @Post(':tradebotId')
-  command(
+  async command(
     @Param('tradebotId') id: string,
     @Body() data: { strategy: string; command: string },
   ) {
-
     try {
-      const tradebot = this.tradebotService.getTradebotById(id);
+      const tradebot = await this.tradebotService.getTradebotById(id);
       if (!tradebot) {
         return 'Tradebot not found';
       }
       if (data.command === 'run') {
-        const runCommand = this.tradebotService.run(data.strategy, tradebot);
+        const runCommand = this.tradebotService.run(tradebot);
         return runCommand;
       }
       if (data.command === 'stop') {

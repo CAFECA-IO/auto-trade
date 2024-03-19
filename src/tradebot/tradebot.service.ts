@@ -19,14 +19,9 @@ export class TradebotService {
   private readonly logger = new Logger(TradebotService.name);
   // TODO: (20240315 Jacky) : Should store the tradebot in the database in the future
   private tradebotArray: Tradebot[] = [];
-  async create(privateKey?: string): Promise<Tradebot> {
+  async create(): Promise<Tradebot> {
     try {
       const tradebot = new Tradebot();
-      if (privateKey == null) {
-        tradebot.wallet = this.userService.createWallet();
-      } else {
-        tradebot.wallet = this.userService.connectWallet(privateKey);
-      }
       tradebot.dewt = await this.dewtService.create(
         tradebot.wallet.address,
         tradebot.wallet.privateKey.slice(2),
@@ -59,14 +54,14 @@ export class TradebotService {
     }
   }
 
-  getAllTradebots(): Tradebot[] {
+  async getAllTradebots(): Promise<Tradebot[]> {
     if (this.tradebotArray.length === 0) {
       this.logger.error('No tradebots found');
     }
     return this.tradebotArray;
   }
 
-  getTradebotById(id: string): Tradebot {
+  async getTradebotById(id: string): Promise<Tradebot> {
     const tradebot = this.tradebotArray.find((tradebot) => tradebot.id === id);
     if (!tradebot) {
       this.logger.error('Tradebot not found');
@@ -105,11 +100,7 @@ export class TradebotService {
       );
     }
   }
-  async executeStrategy(
-    strategyName: string,
-    tradebot: Tradebot,
-    instId: string,
-  ) {
+  async executeStrategy(tradebot: Tradebot, instId: string) {
     this.logger.log(
       'Tradebot ' +
         tradebot.id +
@@ -130,37 +121,37 @@ export class TradebotService {
       }
       const priceArray = await this.priceTickerService.getCandlesticks(instId);
       const suggestion = await this.strategiesService.getSuggestion(
-        strategyName,
+        tradebot.suggestion,
         {
           priceArray: priceArray,
           spreadFee: quotation.data.spreadFee,
         },
       );
       const tradeStrategy = await this.strategiesService.getTradeStrategy(
-        strategyName,
+        tradebot.tradeStrategy,
         {
           suggestion: suggestion,
           holdingStatus: tradebot.holdingStatus,
         },
       );
-      const currentPrice = priceArray[priceArray.length - 1];
       const takeProfit = await this.strategiesService.getTakeProfit(
-        strategyName,
+        tradebot.takeProfit,
         {
           openPrice: tradebot.openPrice,
-          currentPrice: currentPrice,
-          spreadFee: quotation.data.spreadFee,
+          currentPrice: quotation.data.price,
+          spreadFee: tradebot.absSpreadFee,
           holdingStatus: tradebot.holdingStatus,
-          takeProfitLeverage: tradebot.takeProfit,
         },
       );
-      const stopLoss = await this.strategiesService.getStopLoss(strategyName, {
-        openPrice: tradebot.openPrice,
-        currentPrice: currentPrice,
-        spreadFee: quotation.data.spreadFee,
-        holdingStatus: tradebot.holdingStatus,
-        stopLossLeverage: tradebot.stopLoss,
-      });
+      const stopLoss = await this.strategiesService.getStopLoss(
+        tradebot.stopLoss,
+        {
+          openPrice: tradebot.openPrice,
+          currentPrice: quotation.data.price,
+          spreadFee: tradebot.absSpreadFee,
+          holdingStatus: tradebot.holdingStatus,
+        },
+      );
       if (
         tradeStrategy === 'CLOSE' ||
         takeProfit === 'CLOSE' ||
@@ -263,7 +254,7 @@ export class TradebotService {
     }
   }
 
-  async run(strategyName: string, tradebot: Tradebot) {
+  async run(tradebot: Tradebot) {
     if (tradebot.isRunning) {
       this.logger.log('Tradebot ' + tradebot.id + ' is already running');
       return 'Tradebot ' + tradebot.id + ' is already running';
@@ -272,13 +263,13 @@ export class TradebotService {
     tradebot.timer = setInterval(async () => {
       this.logger.log('Tradebot ' + tradebot.id + ' is running');
       if (tradebot.holdingInstId !== 'BTC-USDT') {
-        await this.executeStrategy(strategyName, tradebot, 'ETH-USDT');
+        await this.executeStrategy(tradebot, 'ETH-USDT');
       }
       if (
         tradebot.holdingInstId !== 'ETH-USDT' &&
         tradebot.currentAsset.data.balance.available > 250
       ) {
-        await this.executeStrategy(strategyName, tradebot, 'BTC-USDT');
+        await this.executeStrategy(tradebot, 'BTC-USDT');
       }
     }, 1000 * 15);
     this.logger.log('Tradebot ' + tradebot.id + ' start running');
@@ -295,7 +286,23 @@ export class TradebotService {
     return 'Tradebot ' + tradebot.id + ' is stopped';
   }
 
-  setStopLoss(tradebot: Tradebot, stopLoss: number) {
+  async setSuggestion(tradebot: Tradebot, suggestion: string) {
+    tradebot.suggestion = suggestion;
+    this.logger.log(
+      'Tradebot ' + tradebot.id + ' set suggestion to ' + suggestion,
+    );
+    return 'Tradebot ' + tradebot.id + ' set suggestion to ' + suggestion;
+  }
+
+  async setTradeStrategy(tradebot: Tradebot, tradeStrategy: string) {
+    tradebot.tradeStrategy = tradeStrategy;
+    this.logger.log(
+      'Tradebot ' + tradebot.id + ' set strategy to ' + tradeStrategy,
+    );
+    return 'Tradebot ' + tradebot.id + ' set strategy to ' + tradeStrategy;
+  }
+
+  async setStopLoss(tradebot: Tradebot, stopLoss: string) {
     tradebot.stopLoss = stopLoss;
     this.logger.log(
       'Tradebot ' + tradebot.id + ' set stop loss to ' + stopLoss,
@@ -303,17 +310,11 @@ export class TradebotService {
     return 'Tradebot ' + tradebot.id + ' set stop loss to ' + stopLoss;
   }
 
-  setTakeProfit(tradebot: Tradebot, takeProfit: number) {
+  async setTakeProfit(tradebot: Tradebot, takeProfit: string) {
     tradebot.takeProfit = takeProfit;
     this.logger.log(
       'Tradebot ' + tradebot.id + ' set take profit to ' + takeProfit,
     );
     return 'Tradebot ' + tradebot.id + ' set take profit to ' + takeProfit;
-  }
-
-  setStrategy(tradebot: Tradebot, strategy: string) {
-    tradebot.strategy = strategy;
-    this.logger.log('Tradebot ' + tradebot.id + ' set strategy to ' + strategy);
-    return 'Tradebot ' + tradebot.id + ' set strategy to ' + strategy;
   }
 }

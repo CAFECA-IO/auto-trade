@@ -1,29 +1,37 @@
 import { randomUUID } from 'crypto';
-import { HDNodeWallet, Wallet } from 'ethers';
-import { DewtService } from '../../dewt/dewt.service';
-import { PriceTickerService } from '../../price_ticker/price_ticker.service';
-import { StrategiesService } from '../../strategies/strategies.service';
-import { TransactionService } from '../../transaction/transaction.service';
+import { HDNodeWallet, Wallet, ethers } from 'ethers';
 import { myAsset } from '../../user/dto/myAsset.dto';
-import { UserService } from '../../user/user.service';
+import * as dotenv from 'dotenv';
 
+dotenv.config();
 export class Tradebot {
   constructor() {
     this.id = randomUUID();
     this.created_at = new Date();
     this.updated_at = new Date();
-    this.strategy = 'ARIMA';
+    this.suggestion = process.env.SUGGESTION;
+    this.tradeStrategy = process.env.TRADE_STRATEGY;
+    this.stopLoss = process.env.STOP_LOSS;
+    this.takeProfit = process.env.TAKE_PROFIT;
     this.holdingStatus = 'WAIT';
-    this.stopLoss = 1.6;
-    this.takeProfit = 2.1;
     this.isRunning = false;
+    this.privateKey = process.env.PRIVATE_KEY;
+    if (this.privateKey.length === 66 && this.privateKey.startsWith('0x')) {
+      this.wallet = this.connectWallet(this.privateKey);
+    } else {
+      this.wallet = this.createWallet();
+    }
   }
   id: string;
   created_at: Date;
   updated_at: Date;
   wallet: HDNodeWallet | Wallet;
+  privateKey: string;
   dewt: string;
-  strategy: string;
+  suggestion: string;
+  tradeStrategy: string;
+  stopLoss: string;
+  takeProfit: string;
   startAsset: myAsset;
   currentAsset: myAsset;
   holdingStatus: string;
@@ -32,13 +40,21 @@ export class Tradebot {
   openPrice: number;
   absSpreadFee: number;
   endAsset: myAsset;
-  stopLoss: number; // times of spreadFee
-  takeProfit: number; // times of spreadFee
   isRunning: boolean;
   timer?: NodeJS.Timeout;
 
   toJSON() {
     const { timer, ...tradebot } = this;
+    timer[Symbol()] = 'timer';
     return tradebot;
+  }
+  createWallet(): HDNodeWallet {
+    const randomWallet = ethers.Wallet.createRandom();
+    return randomWallet;
+  }
+
+  connectWallet(privateKey: string) {
+    const realWallet = new ethers.Wallet(privateKey);
+    return realWallet;
   }
 }

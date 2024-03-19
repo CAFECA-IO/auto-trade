@@ -12,10 +12,11 @@ import { StrategiesModule } from '../strategies/strategies.module';
 import { DewtModule } from '../dewt/dewt.module';
 import { TransactionModule } from '../transaction/transaction.module';
 import { Tradebot } from './entities/tradebot.entity';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 describe('TradebotService', () => {
   let service: TradebotService;
-  let privateKey: string;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -38,51 +39,47 @@ describe('TradebotService', () => {
     }).compile();
 
     service = module.get<TradebotService>(TradebotService);
-    privateKey =
-      '54405e07a12ece2ff6abcf56b955343b671ba2913bae5474433ee03aa5b912d9';
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    console.log();
   });
 
   it('should create', async () => {
     const tradebot = await service.create();
-    expect(tradebot).toBeDefined();
+    expect(tradebot).toBeInstanceOf(Tradebot);
   });
 
   it('should create tradebot with private key', async () => {
-    const tradebot = await service.create(privateKey);
+    const tradebot = await service.create();
+    console.log(tradebot);
     expect(tradebot).toBeInstanceOf(Tradebot);
   });
 
   it('should get all tradebots', async () => {
     const tradebot1 = await service.create();
     const tradebot2 = await service.create();
-    const result = service.getAllTradebots();
+    const result = await service.getAllTradebots();
     expect(result).toEqual([tradebot1, tradebot2]);
   });
 
   it('should get tradebot by id', async () => {
-    const createTradebot = await service.create(privateKey);
-    const returnTradebot = service.getTradebotById(createTradebot.id);
+    const createTradebot = await service.create();
+    const returnTradebot = await service.getTradebotById(createTradebot.id);
     expect(returnTradebot).toBe(createTradebot);
   });
 
   it('should receive deposit for tradebot', async () => {
-    const createTradebot = await service.create(privateKey);
+    const createTradebot = await service.create();
     const result = await service.receiveDeposit(createTradebot);
     expect(result.returnDeposit.success).toBeTruthy();
   });
 
   it('should execute trade strategy', async () => {
-    const tradebot = await service.create(privateKey);
+    const tradebot = await service.create();
     await service.receiveDeposit(tradebot);
-    const result = await service.executeStrategy(
-      'autoArima',
-      tradebot,
-      'ETH-USDT',
-    );
+    const result = await service.executeStrategy(tradebot, 'ETH-USDT');
     expect(result).toBeDefined();
   });
 });

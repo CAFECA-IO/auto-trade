@@ -1,9 +1,6 @@
 import * as ARIMA from 'arima';
 
-export function getSuggestion(data: {
-  priceArray: number[];
-  spreadFee: number;
-}) {
+export function suggestion(data: { priceArray: number[]; spreadFee: number }) {
   let suggestion = 'WAIT';
   const arima = new ARIMA('auto');
   arima.train(data.priceArray);
@@ -12,12 +9,13 @@ export function getSuggestion(data: {
   const predict: number[] = arimaPredict[0];
   const predictMax = Math.max(...predict);
   const predictMin = Math.min(...predict);
+  const predictProfit = AbsspreadFee * 2.5;
   const currentPrice = data.priceArray[data.priceArray.length - 1];
-  if (predictMax - currentPrice > AbsspreadFee * 2.5) {
+  if (predictMax - currentPrice > predictProfit) {
     suggestion = 'BUY';
     return suggestion;
   }
-  if (currentPrice - predictMin > AbsspreadFee * 2.5) {
+  if (currentPrice - predictMin > predictProfit) {
     suggestion = 'SELL';
     return suggestion;
   }
@@ -48,20 +46,19 @@ export function takeProfit(data: {
   currentPrice: number;
   spreadFee: number;
   holdingStatus: string;
-  takeProfitLeverage: number;
 }) {
   const AbsOpenSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const takeProfitLeverage = data.takeProfitLeverage;
+  const takeProfit = AbsOpenSpreadFee * 2.2;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (currentPrice - openPrice > AbsOpenSpreadFee * takeProfitLeverage) {
+    if (currentPrice - openPrice > takeProfit) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (openPrice - currentPrice < AbsOpenSpreadFee * takeProfitLeverage) {
+    if (openPrice - currentPrice < takeProfit) {
       return 'CLOSE';
     }
   }
@@ -72,20 +69,19 @@ export function stopLoss(data: {
   currentPrice: number;
   spreadFee: number;
   holdingStatus: string;
-  stopLossLeverage: number;
 }) {
   const AbsOpenSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const stopLossLeverage = data.stopLossLeverage;
+  const stopLoss = AbsOpenSpreadFee * 1.5;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (openPrice - currentPrice > AbsOpenSpreadFee * stopLossLeverage) {
+    if (openPrice - currentPrice > stopLoss) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (currentPrice - openPrice > AbsOpenSpreadFee * stopLossLeverage) {
+    if (currentPrice - openPrice > stopLoss) {
       return 'CLOSE';
     }
   }
