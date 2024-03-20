@@ -74,24 +74,46 @@ export class TradebotService {
   async receiveDeposit(tradebot: Tradebot) {
     try {
       this.logger.log('Tradebot ' + tradebot.id + ' is receiving deposit');
-      tradebot.dewt = await this.dewtService.create(
+      const register = await this.userService.registerUser(
         tradebot.wallet.address,
-        tradebot.wallet.privateKey.slice(2),
+        tradebot.dewt,
       );
-      const deposit = await this.trancsactionService.deposit(tradebot.dewt);
-      tradebot.startAsset = await this.userService.getMyAsset(tradebot.dewt);
-      tradebot.currentAsset = tradebot.startAsset;
-      this.logger.log(
-        'Tradebot ' +
-          tradebot.id +
-          ' received deposit is ' +
-          deposit.success +
-          ' and startAvailable = ' +
-          tradebot.startAsset.data.balance.available,
+      if (register.success == false) {
+        tradebot.dewt = await this.dewtService.create(
+          tradebot.wallet.address,
+          tradebot.wallet.privateKey.slice(2),
+        );
+        this.logger.error(
+          'create dewt for tradebot ' + tradebot.id + ' register failed',
+        );
+      }
+      for (let i = 0; i < 3; i++) {
+        const deposit = await this.trancsactionService.deposit(tradebot.dewt);
+        if (deposit.success === true) {
+          tradebot.startAsset = await this.userService.getMyAsset(
+            tradebot.dewt,
+          );
+          tradebot.currentAsset = tradebot.startAsset;
+          this.logger.log(
+            'Tradebot ' +
+              tradebot.id +
+              ' received deposit is ' +
+              deposit.success +
+              ' and startAvailable = ' +
+              tradebot.startAsset.data.balance.available,
+          );
+          tradebot.updated_at = new Date();
+          return {
+            returnDeposit: true,
+            tradebot: tradebot,
+          };
+        }
+      }
+      this.logger.error(
+        'Tradebot ' + tradebot.id + ' failed to receive deposit',
       );
-      tradebot.updated_at = new Date();
       return {
-        returnDeposit: deposit,
+        returnDeposit: false,
         tradebot: tradebot,
       };
     } catch (error) {
@@ -157,10 +179,19 @@ export class TradebotService {
         takeProfit === 'CLOSE' ||
         stopLoss === 'CLOSE'
       ) {
-        tradebot.dewt = await this.dewtService.create(
+        const register = await this.userService.registerUser(
           tradebot.wallet.address,
-          tradebot.wallet.privateKey.slice(2),
+          tradebot.dewt,
         );
+        if (register.success == false) {
+          tradebot.dewt = await this.dewtService.create(
+            tradebot.wallet.address,
+            tradebot.wallet.privateKey.slice(2),
+          );
+          this.logger.error(
+            'create dewt for tradebot ' + tradebot.id + ' register failed',
+          );
+        }
         const closeCFDOrder = await this.trancsactionService.closeCFDOrder(
           tradebot.dewt,
           tradebot.wallet.privateKey.slice(2),
@@ -168,8 +199,14 @@ export class TradebotService {
           tradebot.positionId,
         );
         if (closeCFDOrder.success == false) {
-          this.logger.log(
-            'Tradebot ' + tradebot.id + ' failed to close position',
+          this.logger.error(
+            'Tradebot ' +
+              tradebot.id +
+              ' failed to close position, ' +
+              'message = ' +
+              closeCFDOrder.message +
+              ', and reason = ' +
+              closeCFDOrder.reason,
           );
           return 'Tradebot ' + tradebot.id + ' failed to close position';
         }
@@ -188,10 +225,19 @@ export class TradebotService {
         return 'Tradebot ' + tradebot.id + ' successfully closed position';
       }
       if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
-        tradebot.dewt = await this.dewtService.create(
+        const register = await this.userService.registerUser(
           tradebot.wallet.address,
-          tradebot.wallet.privateKey.slice(2),
+          tradebot.dewt,
         );
+        if (register.success == false) {
+          tradebot.dewt = await this.dewtService.create(
+            tradebot.wallet.address,
+            tradebot.wallet.privateKey.slice(2),
+          );
+          this.logger.error(
+            'create dewt for tradebot ' + tradebot.id + ' register failed',
+          );
+        }
         quotation = await this.priceTickerService.getCFDQuotation(
           tradeStrategy,
           instId,
@@ -210,8 +256,11 @@ export class TradebotService {
           this.logger.error(
             'Tradebot ' +
               tradebot.id +
-              ' failed to create position' +
-              createCFDOrder.code,
+              ' failed to create position, ' +
+              'message = ' +
+              createCFDOrder.message +
+              ', reason = ' +
+              createCFDOrder.reason,
           );
           return 'Tradebot ' + tradebot.id + ' failed to create position';
         }
@@ -262,6 +311,20 @@ export class TradebotService {
     tradebot.isRunning = true;
     tradebot.timer = setInterval(async () => {
       this.logger.log('Tradebot ' + tradebot.id + ' is running');
+      const now = new Date();
+      if (now.getHours() === 11 && now.getMinutes() === 0) {
+        const receiveDeposit = await this.receiveDeposit(tradebot);
+        this.logger.log(
+          'Tradebot ' +
+            tradebot.id +
+            ' received deposit is ' +
+            receiveDeposit +
+            ' at ' +
+            now +
+            ' and startAvailable = ' +
+            tradebot.startAsset.data.balance.available,
+        );
+      }
       if (tradebot.holdingInstId !== 'BTC-USDT') {
         await this.executeStrategy(tradebot, 'ETH-USDT');
       }
@@ -281,40 +344,34 @@ export class TradebotService {
       return 'Tradebot ' + tradebot.id + ' is already stopped';
     }
     tradebot.isRunning = false;
+    tradebot.updated_at = new Date();
     clearInterval(tradebot.timer);
     this.logger.log('Tradebot ' + tradebot.id + ' is stopped');
     return 'Tradebot ' + tradebot.id + ' is stopped';
   }
 
-  async setSuggestion(tradebot: Tradebot, suggestion: string) {
-    tradebot.suggestion = suggestion;
-    this.logger.log(
-      'Tradebot ' + tradebot.id + ' set suggestion to ' + suggestion,
-    );
-    return 'Tradebot ' + tradebot.id + ' set suggestion to ' + suggestion;
-  }
-
-  async setTradeStrategy(tradebot: Tradebot, tradeStrategy: string) {
-    tradebot.tradeStrategy = tradeStrategy;
-    this.logger.log(
-      'Tradebot ' + tradebot.id + ' set strategy to ' + tradeStrategy,
-    );
-    return 'Tradebot ' + tradebot.id + ' set strategy to ' + tradeStrategy;
-  }
-
-  async setStopLoss(tradebot: Tradebot, stopLoss: string) {
-    tradebot.stopLoss = stopLoss;
-    this.logger.log(
-      'Tradebot ' + tradebot.id + ' set stop loss to ' + stopLoss,
-    );
-    return 'Tradebot ' + tradebot.id + ' set stop loss to ' + stopLoss;
-  }
-
-  async setTakeProfit(tradebot: Tradebot, takeProfit: string) {
-    tradebot.takeProfit = takeProfit;
-    this.logger.log(
-      'Tradebot ' + tradebot.id + ' set take profit to ' + takeProfit,
-    );
-    return 'Tradebot ' + tradebot.id + ' set take profit to ' + takeProfit;
+  async updateTradebot(
+    tradebot: Tradebot,
+    options: {
+      suggestion?: string;
+      tradeStrategy?: string;
+      stopLoss?: string;
+      takeProfit?: string;
+    },
+  ): Promise<Tradebot> {
+    if (options.suggestion) {
+      tradebot.suggestion = options.suggestion;
+    }
+    if (options.tradeStrategy) {
+      tradebot.tradeStrategy = options.tradeStrategy;
+    }
+    if (options.stopLoss) {
+      tradebot.stopLoss = options.stopLoss;
+    }
+    if (options.takeProfit) {
+      tradebot.takeProfit = options.takeProfit;
+    }
+    this.logger.log('Tradebot ' + tradebot.id + ' is updated');
+    return tradebot;
   }
 }

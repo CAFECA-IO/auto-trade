@@ -23,6 +23,8 @@ describe('DewtService', () => {
     const privateKey =
       'ed7f7f08cce6e0455d97c4eb2e51d2899cc8ce0bdc92c8701584ff816eb86976';
     const dewt = await service.create(address, privateKey);
-    console.log(dewt);
+    // Info: (20240320 - Jacky) this is aim to get the DEWT for manual testing
+    // console.log(dewt);
+    expect(dewt.length).toBe(399);
   });
 });

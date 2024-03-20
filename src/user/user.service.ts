@@ -9,6 +9,7 @@ import { DOMAIN_BACKEND } from '../common/constants/config';
 export class UserService {
   private readonly TBDBackendUrl: string;
   constructor(private readonly httpService: HttpService) {}
+
   async registerUser(address: string, dewt: string): Promise<any> {
     const { data } = await firstValueFrom(
       this.httpService.post(

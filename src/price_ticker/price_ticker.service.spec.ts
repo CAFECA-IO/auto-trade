@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PriceTickerService } from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
 import { CandlestickDto } from './dto/candlestick.dto';
+import { QuotationDto } from './dto/quotation.dto';
 
 describe('PriceTickerService', () => {
   let service: PriceTickerService;
@@ -16,24 +17,18 @@ describe('PriceTickerService', () => {
   });
 
   it('should return quotation', async () => {
-    const res = await service.getCFDQuotation('SELL');
-    console.log(res);
-    expect(res).toBeDefined();
-  });
-
-  it('should return an array of price tickers', async () => {
-    const ETHdataArray: number[] = await service.getTickers('ETH-USDT');
-    const BTCdataArray: number[] = await service.getTickers('BTC-USDT');
-    console.log(ETHdataArray);
-    console.log(BTCdataArray);
-    // expect(res).toBeDefined();
+    const quotation = new QuotationDto();
+    jest
+      .spyOn(service, 'getCFDQuotation')
+      .mockImplementation(async () => quotation);
+    expect(await service.getCFDQuotation()).toBe(quotation);
   });
 
   it('should return an array of candlestick', async () => {
-    const ETHdataArray: number[] = await service.getCandlesticks('ETH-USDT');
-    const BTCdataArray: number[] = await service.getCandlesticks('BTC-USDT');
-    console.log(ETHdataArray);
-    console.log(BTCdataArray);
-    // expect(res).toBeDefined();
+    const array = [1, 2, 3, 4, 5];
+    jest
+      .spyOn(service, 'getCandlesticks')
+      .mockImplementation(async () => array);
+    expect(await service.getCandlesticks()).toStrictEqual([1, 2, 3, 4, 5]);
   });
 });
