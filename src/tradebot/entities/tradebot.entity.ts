@@ -15,9 +15,11 @@ export class Tradebot {
     this.takeProfit = process.env.TAKE_PROFIT;
     this.holdingStatus = 'WAIT';
     this.isRunning = false;
-    this.privateKey = process.env.PRIVATE_KEY;
-    if (this.privateKey.length === 66 && this.privateKey.startsWith('0x')) {
-      this.wallet = this.connectWallet(this.privateKey);
+    if (
+      process.env.PRIVATE_KEY.length === 66 &&
+      process.env.PRIVATE_KEY.startsWith('0x')
+    ) {
+      this.wallet = this.connectWallet(process.env.PRIVATE_KEY);
     } else {
       this.wallet = this.createWallet();
     }
@@ -26,7 +28,6 @@ export class Tradebot {
   created_at: Date;
   updated_at: Date;
   wallet: HDNodeWallet | Wallet;
-  privateKey: string;
   dewt: string;
   suggestion: string;
   tradeStrategy: string;
@@ -44,8 +45,8 @@ export class Tradebot {
   timer?: NodeJS.Timeout;
 
   toJSON() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { timer, ...tradebot } = this;
-    timer[Symbol()] = 'timer';
     return tradebot;
   }
   createWallet(): HDNodeWallet {

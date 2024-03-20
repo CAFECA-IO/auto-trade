@@ -8,8 +8,14 @@ export class TradebotController {
   @Post()
   async create() {
     const createTradebot = await this.tradebotService.create();
+    if (!createTradebot) {
+      return 'Tradebot not created';
+    }
     const { returnDeposit, tradebot } =
       await this.tradebotService.receiveDeposit(createTradebot);
+    if (!returnDeposit) {
+      return 'Tradebot is created, but deposit is not sucessful';
+    }
     return (
       'Tradebot ' +
       tradebot.id +
@@ -20,7 +26,7 @@ export class TradebotController {
       ' private key is ' +
       tradebot.wallet.privateKey +
       ' and received deposit is ' +
-      returnDeposit.success +
+      returnDeposit +
       ' and startAvailable = ' +
       tradebot.startAsset.data.balance.available
     );
@@ -48,54 +54,26 @@ export class TradebotController {
     @Query('id') id: string,
     @Body()
     data: {
-      deposit?: string;
       suggestion?: string;
       tradeStrategy?: string;
       stopLoss?: string;
       takeProfit?: string;
     },
   ) {
-    const getTradebot = await this.tradebotService.getTradebotById(id);
-    if (data.deposit) {
-      const { returnDeposit, tradebot } =
-        await this.tradebotService.receiveDeposit(getTradebot);
-      return (
-        'Tradebot ' +
-        tradebot.id +
-        ' received deposit is ' +
-        returnDeposit.success +
-        ' and startAvailable = ' +
-        tradebot.startAsset.data.balance.available
-      );
+    const tradebot = await this.tradebotService.getTradebotById(id);
+    if (!tradebot) {
+      return 'Tradebot not found';
     }
-    if (data.suggestion) {
-      const suggestionResult = this.tradebotService.setSuggestion(
-        getTradebot,
-        data.suggestion,
-      );
-      return suggestionResult;
-    }
-    if (data.tradeStrategy) {
-      const strategyResult = this.tradebotService.setTradeStrategy(
-        getTradebot,
-        data.tradeStrategy,
-      );
-      return strategyResult;
-    }
-    if (data.stopLoss) {
-      const stopLossResult = this.tradebotService.setStopLoss(
-        getTradebot,
-        data.stopLoss,
-      );
-      return stopLossResult;
-    }
-    if (data.takeProfit) {
-      const takeProfitResult = this.tradebotService.setTakeProfit(
-        getTradebot,
-        data.takeProfit,
-      );
-      return takeProfitResult;
-    }
+    const updatedTradebot = await this.tradebotService.updateTradebot(
+      tradebot,
+      data,
+    );
+    return (
+      updatedTradebot.id +
+      ' is updated' +
+      ' and tradebot = ' +
+      updatedTradebot.toJSON()
+    );
   }
 
   @Post(':tradebotId')
@@ -115,6 +93,10 @@ export class TradebotController {
       if (data.command === 'stop') {
         const stopCommand = this.tradebotService.stop(tradebot);
         return stopCommand;
+      }
+      if (data.command === 'deposit') {
+        const depositCommand = this.tradebotService.receiveDeposit(tradebot);
+        return depositCommand;
       }
       return data.command + 'is invalid command';
     } catch (error) {

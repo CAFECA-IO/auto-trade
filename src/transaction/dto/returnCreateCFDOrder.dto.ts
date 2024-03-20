@@ -1,51 +1,46 @@
 export class ReturnCreateCFDOrderDto {
+  success: boolean;
   code: string;
+  message: string;
+  reason: string;
   data: {
-    balanceSnapshot: [
-      {
-        available: string;
-        blockNumber: number;
-        createdAt: number;
-        currency: string;
-        id: string;
-        locked: string;
-        updatedAt: number;
-        userAddress: string;
-      },
-    ];
-    orderSnapshot: {
-      amount: number;
-      createTimestamp: number;
-      fee: number;
-      guaranteedStop: boolean;
+    txhash: string;
+    balanceSnapshot: {
       id: string;
+      userAddress: string;
+      currency: string;
+      available: string;
+      locked: string;
+      blockNumber: number;
+      createdAt: number;
+      updatedAt: number;
+    }[];
+    orderSnapshot: {
+      orderType: string;
+      id: string;
+      txhash: string;
+      orderStatus: string;
+      state: string;
       instId: string;
-      leverage: number;
-      liquidationPrice: number;
-      liquidationTime: number;
-      margin: {
-        amount: number;
-        asset: string;
-      };
+      userAddress: string;
+      targetAsset: string;
+      unitAsset: string;
+      margin: { amount: number; asset: string };
       openPrice: string;
       openSpotPrice: string;
       openSpreadFee: string;
-      orderStatus: string;
-      orderType: string;
+      amount: number;
+      fee: number;
       outerFee: string;
-      pnl: {
-        type: string;
-      };
-      share: boolean;
-      state: string;
-      targetAsset: string;
-      txhash: string;
       typeOfPosition: string;
-      unitAsset: string;
+      leverage: number;
+      guaranteedStop: boolean;
+      liquidationPrice: number;
+      liquidationTime: number;
+      share: boolean;
       updatedTimestamp: number;
-      userAddress: string;
+      createTimestamp: number;
+      pnl: { type: string };
     };
-    txhash: string;
   };
-  success: boolean;
 }

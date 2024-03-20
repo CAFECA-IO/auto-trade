@@ -165,7 +165,6 @@ export class TransactionService {
       version: SignTypedDataVersion.V4,
     });
     const { data } = await lastValueFrom(
-      //should be put
       this.httpService.put<ReturnCloseCFDOrderDto>(
         DOMAIN_BACKEND + '/users/cfds/close',
         { applyData: closeCFDOrderDto, userSignature: eip712signature },

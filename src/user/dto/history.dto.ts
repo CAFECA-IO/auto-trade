@@ -1,5 +1,5 @@
 export class HistoryList {
-  success: string;
+  success: boolean;
   code: string;
   data: History[];
 }
