@@ -23,6 +23,12 @@ describe('PriceTickerService', () => {
     expect(await service.getCFDQuotation()).toBe(quotation);
   });
 
+  it('should return an array of tickers', async () => {
+    const array = [1, 2, 3, 4, 5];
+    jest.spyOn(service, 'getTickers').mockImplementation(async () => array);
+    expect(await service.getTickers()).toStrictEqual([1, 2, 3, 4, 5]);
+  });
+
   it('should return an array of candlestick', async () => {
     const array = [1, 2, 3, 4, 5];
     jest

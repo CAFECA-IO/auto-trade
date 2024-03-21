@@ -88,7 +88,12 @@ export class TradebotService {
         );
       }
       for (let i = 0; i < 3; i++) {
-        const deposit = await this.trancsactionService.deposit(tradebot.dewt);
+        const createDepositDto =
+          await this.trancsactionService.createDepositDto();
+        const deposit = await this.trancsactionService.deposit(
+          tradebot.dewt,
+          createDepositDto,
+        );
         if (deposit.success === true) {
           tradebot.currentAsset = await this.userService.getMyAsset(
             tradebot.dewt,
@@ -191,11 +196,15 @@ export class TradebotService {
             'create dewt for tradebot ' + tradebot.id + ' register failed',
           );
         }
+        const closeCFDOrderDto =
+          await this.trancsactionService.closeCFDOrderDTO(
+            quotation,
+            tradebot.positionId,
+          );
         const closeCFDOrder = await this.trancsactionService.closeCFDOrder(
           tradebot.dewt,
           tradebot.wallet.privateKey.slice(2),
-          quotation,
-          tradebot.positionId,
+          closeCFDOrderDto,
         );
         if (closeCFDOrder.success == false) {
           this.logger.error(
@@ -245,11 +254,12 @@ export class TradebotService {
           tradebot.currentAsset.data.balance.available,
           quotation.data.price,
         );
+        const createCFDOrderDto =
+          await this.trancsactionService.createCFDOrderDTO(quotation, amount);
         const createCFDOrder = await this.trancsactionService.createCFDOrder(
           tradebot.dewt,
           tradebot.wallet.privateKey.slice(2),
-          quotation,
-          amount,
+          createCFDOrderDto,
         );
         if (createCFDOrder.success == false) {
           this.logger.error(

@@ -20,12 +20,19 @@ import { DOMAIN_BACKEND } from '../common/constants/config';
 export class TransactionService {
   constructor(private readonly httpService: HttpService) {}
 
-  async deposit(dewt: string, amount: number = 100): Promise<ReturnDeposit> {
+  async createDepositDto(amount: number = 100): Promise<CreateDepositDto> {
     const createDepositDto = new CreateDepositDto();
     createDepositDto.blockchain = 'ETH';
     createDepositDto.txhash = '0x123';
     createDepositDto.targetAsset = 'USDT';
     createDepositDto.targetAmount = amount;
+    return createDepositDto;
+  }
+
+  async deposit(
+    dewt: string,
+    createDepositDto: CreateDepositDto,
+  ): Promise<ReturnDeposit> {
     const { data } = await firstValueFrom(
       this.httpService.post<ReturnDeposit>(
         DOMAIN_BACKEND + '/users/deposit',
@@ -41,14 +48,11 @@ export class TransactionService {
     return data;
   }
 
-  async createCFDOrder(
-    dewt: string,
-    privatekey: string,
+  async createCFDOrderDTO(
     quotation: QuotationDto,
     amount: number,
-  ): Promise<ReturnCreateCFDOrderDto> {
+  ): Promise<CreateCFDOrderDTO> {
     const createCFDDto = new CreateCFDOrderDTO();
-    const typeData = CFDOrderCreate;
     createCFDDto.operation = 'CREATE';
     createCFDDto.orderType = 'CFD';
     createCFDDto.instId = quotation.data.instId;
@@ -75,8 +79,17 @@ export class TransactionService {
     createCFDDto.createTimestamp = getTimestamp();
     createCFDDto.fee = 0;
     createCFDDto.guaranteedStop = false;
+    return createCFDDto;
+  }
+
+  async createCFDOrder(
+    dewt: string,
+    privatekey: string,
+    createCFDDto: CreateCFDOrderDTO,
+  ): Promise<ReturnCreateCFDOrderDto> {
+    const typeData = CFDOrderCreate;
     // Info: (20240315 - Jacky) this is aim to copy the object without any references
-    typeData.message = JSON.parse(JSON.stringify(createCFDDto));
+    typeData.message = createCFDDto;
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
       typeData.message.quotation.price,
       10,
@@ -127,14 +140,12 @@ export class TransactionService {
     );
     return data;
   }
-  async closeCFDOrder(
-    dewt: string,
-    privatekey: string,
+
+  async closeCFDOrderDTO(
     quotation: QuotationDto,
     referenceId: string,
-  ): Promise<ReturnCloseCFDOrderDto> {
+  ): Promise<CloseCFDOrderDto> {
     const closeCFDOrderDto = new CloseCFDOrderDto();
-    const typeData = CFDOrderClose;
     closeCFDOrderDto.operation = 'CLOSE';
     closeCFDOrderDto.orderType = 'CFD';
     closeCFDOrderDto.referenceId = referenceId;
@@ -142,21 +153,30 @@ export class TransactionService {
     closeCFDOrderDto.closePrice = quotation.data.price;
     closeCFDOrderDto.closedType = 'BY_USER';
     closeCFDOrderDto.closeTimestamp = getTimestamp();
+    return closeCFDOrderDto;
+  }
+
+  async closeCFDOrder(
+    dewt: string,
+    privatekey: string,
+    closeCFDOrderDto: CloseCFDOrderDto,
+  ): Promise<ReturnCloseCFDOrderDto> {
+    const typeData = CFDOrderClose;
     // Info: (20240315 - Jacky) this is aim to copy the object without any references
-    typeData.message = JSON.parse(JSON.stringify(closeCFDOrderDto));
+    typeData.message = closeCFDOrderDto;
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
-      quotation.data.price,
+      typeData.message.quotation.price,
       10,
     );
     typeData.message.quotation.spotPrice = SafeMath.toSmallestUnit(
-      quotation.data.spotPrice,
+      typeData.message.quotation.spotPrice,
       10,
     );
     typeData.message.quotation.spreadFee = Math.abs(
-      SafeMath.toSmallestUnit(quotation.data.spreadFee, 10),
+      SafeMath.toSmallestUnit(typeData.message.quotation.spreadFee, 10),
     );
     typeData.message.closePrice = SafeMath.toSmallestUnit(
-      closeCFDOrderDto.closePrice,
+      typeData.message.closePrice,
       10,
     );
     const eip712signature = signTypedData({
