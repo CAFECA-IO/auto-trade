@@ -27,8 +27,8 @@ export class TradebotController {
       tradebot.wallet.privateKey +
       ' and received deposit is ' +
       returnDeposit +
-      ' and startAvailable = ' +
-      tradebot.startAsset.data.balance.available
+      ' and currentAvailable = ' +
+      tradebot.currentAsset.data.balance.available
     );
   }
 
