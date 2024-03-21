@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DewtService } from './dewt.service';
-import { randomHex } from '../common/common';
 
 describe('DewtService', () => {
   let service: DewtService;
@@ -14,7 +13,6 @@ describe('DewtService', () => {
   });
 
   it('should be defined', () => {
-    console.log(randomHex(32));
     expect(service).toBeDefined();
   });
 

@@ -17,6 +17,7 @@ describe('StrategiesService', () => {
   });
 
   it('should run autoArima to get suggestion', async () => {
+    console.log = () => {};
     const ETHPriceArray = [
       3250.92, 3227.38, 3264, 3252.43, 3277.55, 3264.01, 3280.58, 3260.4,
       3258.96, 3275.94, 3292.73, 3281.7, 3273.62, 3259.7, 3222.2, 3228.48,
@@ -60,17 +61,17 @@ describe('StrategiesService', () => {
       priceArray: ETHPriceArray,
       spreadFee: spreadFee,
     });
-    console.log(ETHSuggestion);
+    expect(ETHSuggestion).toBe('BUY');
   });
 
   it('should run executeStrategy', async () => {
     const suggestion = 'BUY';
-    const holdingStatus = 'SELL';
+    const holdingStatus = 'BUY';
     const result = await strategiesService.getTradeStrategy('autoArima', {
       suggestion: suggestion,
       holdingStatus: holdingStatus,
     });
-    console.log(result);
+    expect(result).toBe('WAIT');
   });
 
   it('should run takeProfit', async () => {
@@ -84,7 +85,7 @@ describe('StrategiesService', () => {
       spreadFee,
       holdingStatus,
     });
-    console.log(result);
+    expect(result).toBe('CLOSE');
   });
 
   it('should run stopLoss', async () => {
@@ -98,10 +99,11 @@ describe('StrategiesService', () => {
       spreadFee,
       holdingStatus,
     });
-    console.log(result);
+    expect(result).toBe('CLOSE');
   });
 
   it('should backtest use csv', async () => {
+    console.log = () => {};
     // Read the file
     const csvContent = fs.readFileSync('src/strategies/ETH-USD.csv', 'utf8');
     // Split the content into rows (assuming newline-separated rows)
@@ -127,6 +129,7 @@ describe('StrategiesService', () => {
   });
 
   it('should backtest use api', async () => {
+    console.log = () => {};
     const ETHPriceArray = [
       3250.92, 3227.38, 3264, 3252.43, 3277.55, 3264.01, 3280.58, 3260.4,
       3258.96, 3275.94, 3292.73, 3281.7, 3273.62, 3259.7, 3222.2, 3228.48,

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { HttpModule } from '@nestjs/axios';
+import { HistoryList } from './dto/history.dto';
 
 describe('UserService', () => {
   let service: UserService;
@@ -70,16 +71,11 @@ describe('UserService', () => {
   });
 
   it('should return history data', async () => {
-    const history = {
-      success: true,
-      code: 'string',
-      data: [],
-    };
+    const historyList = new HistoryList();
     jest
       .spyOn(service, 'listHistories')
-      .mockImplementation(async () => history);
+      .mockImplementation(async () => historyList);
     const result = await service.listHistories(dewt);
-    console.log(JSON.stringify(result.data));
-    expect(result).not.toBeNull();
-  }, 300000); // too much time to get all the data
+    expect(result).toBeInstanceOf(HistoryList);
+  });
 });

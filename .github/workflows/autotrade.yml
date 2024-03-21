@@ -9,7 +9,7 @@ on:
       - develop, master
 
 jobs:
-  build:
+  autotrade-tests:
     runs-on: ubuntu-latest
 
     steps:
