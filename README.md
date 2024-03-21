@@ -27,11 +27,11 @@ npm install
 3. Copy the example `.env` file in your root directory and fill in the required information:
 
 ```json
-SUGGESTION = 'autoArima';
-TRADE_STRATEGY = 'autoArima';
-STOP_LOSS = 'autoArima';
-TAKE_PROFIT = 'autoArima';
-PRIVATE_KEY = 'YOUR_PRIVATE_KEY';// Your could create tradebot by your own Wallet private key
+SUGGESTION = "autoArima"
+TRADE_STRATEGY = "autoArima"
+STOP_LOSS = "autoArima"
+TAKE_PROFIT = "autoArima"
+PRIVATE_KEY = "YOUR_PRIVATE_KEY"// Your could create tradebot by your own Wallet private key
 ```
 
 ## Change strategy

@@ -3,10 +3,13 @@ name: CI
 on:
   push:
     branches:
-      - feature/*, fix/*, hotfix/*
+      - feature/*
+      - fix/*
+      - hotfix/*
   pull_request:
     branches:
-      - develop, master
+      - develop
+      - master
 
 jobs:
   autotrade-tests:
