@@ -90,17 +90,16 @@ export class TradebotService {
       for (let i = 0; i < 3; i++) {
         const deposit = await this.trancsactionService.deposit(tradebot.dewt);
         if (deposit.success === true) {
-          tradebot.startAsset = await this.userService.getMyAsset(
+          tradebot.currentAsset = await this.userService.getMyAsset(
             tradebot.dewt,
           );
-          tradebot.currentAsset = tradebot.startAsset;
           this.logger.log(
             'Tradebot ' +
               tradebot.id +
               ' received deposit is ' +
               deposit.success +
-              ' and startAvailable = ' +
-              tradebot.startAsset.data.balance.available,
+              ' and currentAvailable = ' +
+              tradebot.currentAsset.data.balance.available,
           );
           tradebot.updated_at = new Date();
           return {
@@ -235,7 +234,7 @@ export class TradebotService {
             tradebot.wallet.privateKey.slice(2),
           );
           this.logger.error(
-            'create dewt for tradebot ' + tradebot.id + ' register failed',
+            'create dewt for tradebot ' + tradebot.id + ' register is failed',
           );
         }
         quotation = await this.priceTickerService.getCFDQuotation(
@@ -304,6 +303,7 @@ export class TradebotService {
   }
 
   async run(tradebot: Tradebot) {
+    console.log = () => {};
     if (tradebot.isRunning) {
       this.logger.log('Tradebot ' + tradebot.id + ' is already running');
       return 'Tradebot ' + tradebot.id + ' is already running';
@@ -312,7 +312,7 @@ export class TradebotService {
     tradebot.timer = setInterval(async () => {
       this.logger.log('Tradebot ' + tradebot.id + ' is running');
       const now = new Date();
-      if (now.getHours() === 11 && now.getMinutes() === 0) {
+      if (now.getHours() === 11 && now.getMinutes() === 30) {
         const receiveDeposit = await this.receiveDeposit(tradebot);
         this.logger.log(
           'Tradebot ' +
@@ -321,8 +321,8 @@ export class TradebotService {
             receiveDeposit +
             ' at ' +
             now +
-            ' and startAvailable = ' +
-            tradebot.startAsset.data.balance.available,
+            ' and currentAsset = ' +
+            tradebot.currentAsset.data.balance.available,
         );
       }
       if (tradebot.holdingInstId !== 'BTC-USDT') {

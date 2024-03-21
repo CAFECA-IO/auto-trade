@@ -179,7 +179,7 @@ export class TransactionService {
     return data;
   }
   calculateAmount(balance: number, price: number): number {
-    const nearest = (balance / (price / 5)).toFixed(4);
+    const nearest = (balance - 0.01) / (price / 5);
     return Number(nearest);
   }
 }

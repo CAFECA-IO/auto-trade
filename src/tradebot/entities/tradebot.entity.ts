@@ -33,7 +33,6 @@ export class Tradebot {
   tradeStrategy: string;
   stopLoss: string;
   takeProfit: string;
-  startAsset: myAsset;
   currentAsset: myAsset;
   holdingStatus: string;
   holdingInstId: string;
