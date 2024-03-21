@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PriceTickerService } from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
-import { CandlestickDto } from './dto/candlestick.dto';
 import { QuotationDto } from './dto/quotation.dto';
 
 describe('PriceTickerService', () => {
