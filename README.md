@@ -27,11 +27,11 @@ npm install
 3. Copy the example `.env` file in your root directory and fill in the required information:
 
 ```json
-SUGGESTION = 'autoArima';
-TRADE_STRATEGY = 'autoArima';
-STOP_LOSS = 'autoArima';
-TAKE_PROFIT = 'autoArima';
-PRIVATE_KEY = 'YOUR_PRIVATE_KEY';// Your could create tradebot by your own Wallet private key
+SUGGESTION = "autoArima"
+TRADE_STRATEGY = "autoArima"
+STOP_LOSS = "autoArima"
+TAKE_PROFIT = "autoArima"
+PRIVATE_KEY = "YOUR_PRIVATE_KEY"// Your could create tradebot by your own Wallet private key
 ```
 
 ## Change strategy
@@ -133,8 +133,8 @@ export function stopLoss(data: {
 }
 ```
 
-[!WARNING]
-The strategy must have the same functions and parameters as the example above. and it' free to combine the strategy as long as it's in the same format.
+> [!WARNING]
+The strategy must have the same functions and parameters as the example above. However, it' free to combine the strategy as long as it's in the same format.
 
 ## Running the app
 
@@ -203,13 +203,12 @@ Parameters
 
 ### body
 
-| name      | type    | required | default |
-| --------  | ------- | -------- | ------- |
-| deposit   | string  | false    | null    |
-| suggestion   | string  | false    | null    |
-| tradeStrategy   | string  | false    | null    |
-| stopLoss   | string  | false    | null    |
-| takeProfit   | string  | false    | null    |
+| name          | type          | required | default |
+| ------------- | ------------- | -------- | ------- |
+| suggestion    | string        | false    | null    |
+| tradeStrategy | string        | false    | null    |
+| stopLoss      | string        | false    | null    |
+| takeProfit    | string        | false    | null    |
 
 ### Request Example
 
@@ -222,7 +221,6 @@ PUT /tradebot?id=tradebotId
 
 ```json
 "body": {
-  "deposit": "deposit",
   "suggestion": "string",
   "tradeStrategy": "string",
   "stopLoss": "string",
@@ -243,7 +241,6 @@ POST /tradebot/tradebotId
 | name      | type    | required | default |description |
 | --------  | ------- | -------- | ------- | ----- |
 | command   | string  | true    | null    | "run" or "stop"
-
 
 ### Request Example
 

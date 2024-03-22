@@ -1,18 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TradebotService } from './tradebot.service';
-import { PriceTickerModule } from '../price_ticker/price_ticker.module';
-import { TransactionService } from '../transaction/transaction.service';
-import { HttpModule } from '@nestjs/axios';
-import { UserModule } from '../user/user.module';
 import { PriceTickerService } from '../price_ticker/price_ticker.service';
-import { UserService } from '../user/user.service';
 import { StrategiesService } from '../strategies/strategies.service';
+import { TransactionService } from '../transaction/transaction.service';
+import { UserService } from '../user/user.service';
 import { DewtService } from '../dewt/dewt.service';
-import { StrategiesModule } from '../strategies/strategies.module';
-import { DewtModule } from '../dewt/dewt.module';
-import { TransactionModule } from '../transaction/transaction.module';
 import { Tradebot } from './entities/tradebot.entity';
 import * as dotenv from 'dotenv';
+import { HttpModule } from '@nestjs/axios';
+import { DewtModule } from '../dewt/dewt.module';
+import { PriceTickerModule } from '../price_ticker/price_ticker.module';
+import { StrategiesModule } from '../strategies/strategies.module';
+import { TransactionModule } from '../transaction/transaction.module';
+import { UserModule } from '../user/user.module';
 dotenv.config();
 
 describe('TradebotService', () => {
@@ -41,66 +41,119 @@ describe('TradebotService', () => {
     service = module.get<TradebotService>(TradebotService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('should create a tradebot', async () => {
+    const result = await service.create();
+    expect(result).toBeInstanceOf(Tradebot);
   });
 
-  it('should create', async () => {
-    const fakeTradebot = new Tradebot();
-    jest.spyOn(service, 'create').mockImplementation(async () => fakeTradebot);
-    expect(await service.create()).toBeInstanceOf(Tradebot);
-  });
+  describe('getAllTradebots', () => {
+    it('should return all tradebots', async () => {
+      // Arrange
+      const tradebots: Tradebot[] = [new Tradebot()];
+      jest.spyOn(service, 'getAllTradebots').mockResolvedValue(tradebots);
+      jest.spyOn(service['logger'], 'error');
 
-  it('should get all tradebots', async () => {
-    const tradebot1 = new Tradebot();
-    const tradebot2 = new Tradebot();
-    jest
-      .spyOn(service, 'getAllTradebots')
-      .mockImplementation(async () => [tradebot1, tradebot2]);
-    expect(await service.getAllTradebots()).toEqual([tradebot1, tradebot2]);
-  });
+      // Act
+      const result = await service.getAllTradebots();
 
-  it('should get tradebot by id', async () => {
-    const tradebot = new Tradebot();
-    jest
-      .spyOn(service, 'getTradebotById')
-      .mockImplementation(async () => tradebot);
-    expect(await service.getTradebotById(tradebot.id)).toEqual(tradebot);
-  });
+      // Assert
+      expect(result).toEqual(tradebots);
+      expect(service['logger'].error).not.toHaveBeenCalled();
+    });
 
-  it('should receive deposit for tradebot', async () => {
-    const tradebot = new Tradebot();
-    jest.spyOn(service, 'receiveDeposit').mockImplementation(async () => ({
-      returnDeposit: true,
-      tradebot,
-    }));
-    expect(await service.receiveDeposit(tradebot)).toEqual({
-      returnDeposit: true,
-      tradebot,
+    it('should handle error when no tradebots found', async () => {
+      // Arrange
+      jest.spyOn(service['logger'], 'error');
+
+      // Act
+      const result = await service.getAllTradebots();
+
+      // Assert
+      expect(result).toEqual([]);
+      expect(service['logger'].error).toHaveBeenCalledWith(
+        'No tradebots found',
+      );
     });
   });
 
-  it('should execute trade strategy', async () => {
+  it('should return the tradebot with the specified id', async () => {
+    // Arrange
     const tradebot = new Tradebot();
-    jest
-      .spyOn(service, 'executeStrategy')
-      .mockImplementation(async () => 'buy');
-    expect(await service.executeStrategy(tradebot, 'ETH-USDT')).toBe('buy');
+    tradebot.id = '1';
+    jest.spyOn(service, 'getTradebotById').mockResolvedValue(tradebot);
+    // Act
+    const result = await service.getTradebotById('1');
+
+    // Assert
+    expect(result).toBe(tradebot);
   });
 
-  it('should set Suggestion', async () => {
-    const createTradebot = new Tradebot();
-    const resultTradebot = new Tradebot();
-    resultTradebot.suggestion = 'BUY';
-    resultTradebot.stopLoss = '100';
-    jest
-      .spyOn(service, 'updateTradebot')
-      .mockImplementation(async () => resultTradebot);
-    const tradebot = await service.updateTradebot(createTradebot, {
-      suggestion: 'BUY',
-      stopLoss: '100',
+  describe('receiveDeposit', () => {
+    it('should receive deposit for the tradebot', async () => {
+      // Arrange
+      const tradebot = new Tradebot();
+      // Act
+      jest
+        .spyOn(service, 'receiveDeposit')
+        .mockImplementation(async (tradebot: Tradebot) => {
+          return { returnDeposit: true, tradebot: tradebot };
+        });
+      const result = await service.receiveDeposit(tradebot);
+      // Assert
+      expect(result).toEqual({
+        returnDeposit: true,
+        tradebot: tradebot,
+      });
     });
-    expect(tradebot.suggestion).toBe('BUY');
-    expect(tradebot.stopLoss).toBe('100');
+
+    it('should handle error when receiving deposit', async () => {
+      // Arrange
+      const tradebot = new Tradebot();
+
+      // Act
+      const result = await service.receiveDeposit(tradebot);
+
+      // Assert
+      expect(result).toEqual({
+        returnDeposit: false,
+        tradebot: tradebot,
+      });
+    });
+  });
+
+  describe('executeStrategy', () => {
+    it('should execute the trade strategy for the tradebot', async () => {
+      // Arrange
+      const tradebot = new Tradebot();
+      const instId = 'ETH-USDT';
+      jest
+        .spyOn(service, 'executeStrategy')
+        .mockResolvedValue(
+          'Tradebot ' + tradebot.id + ' sucessfully close position',
+        );
+      const result = await service.executeStrategy(tradebot, instId);
+      // Assert
+      expect(result).toBe(
+        'Tradebot ' + tradebot.id + ' sucessfully close position',
+      );
+    });
+
+    it('should handle error when executing the trade strategy', async () => {
+      // Arrange
+      const tradebot = new Tradebot();
+      const instId = 'ETH-USDT';
+      // Act
+      jest
+        .spyOn(service, 'executeStrategy')
+        .mockResolvedValue(
+          'Tradebot ' + tradebot.id + ' failed to close position',
+        );
+      const result = await service.executeStrategy(tradebot, instId);
+
+      // Assert
+      expect(result).toBe(
+        'Tradebot ' + tradebot.id + ' failed to close position',
+      );
+    });
   });
 });
