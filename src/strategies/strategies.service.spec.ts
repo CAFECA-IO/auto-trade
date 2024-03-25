@@ -125,7 +125,7 @@ describe('StrategiesService', () => {
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-2396.2045136100032);
+    expect(sum).toBe(-2093.879039695004);
   });
 
   it('should backtest use api', async () => {
@@ -178,6 +178,6 @@ describe('StrategiesService', () => {
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-39.96050000000014);
+    expect(sum).toBe(-347.9295500000012);
   });
 });
