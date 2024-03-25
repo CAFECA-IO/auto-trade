@@ -89,7 +89,7 @@ export class TransactionService {
   ): Promise<ReturnCreateCFDOrderDto> {
     const typeData = CFDOrderCreate;
     // Info: (20240315 - Jacky) this is aim to copy the object without any references
-    typeData.message = createCFDDto;
+    typeData.message = JSON.parse(JSON.stringify(createCFDDto));
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
       typeData.message.quotation.price,
       10,
@@ -163,7 +163,7 @@ export class TransactionService {
   ): Promise<ReturnCloseCFDOrderDto> {
     const typeData = CFDOrderClose;
     // Info: (20240315 - Jacky) this is aim to copy the object without any references
-    typeData.message = closeCFDOrderDto;
+    typeData.message = JSON.parse(JSON.stringify(closeCFDOrderDto));
     typeData.message.quotation.price = SafeMath.toSmallestUnit(
       typeData.message.quotation.price,
       10,
