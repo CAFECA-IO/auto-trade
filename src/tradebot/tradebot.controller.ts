@@ -55,7 +55,6 @@ export class TradebotController {
     @Body()
     data: {
       suggestion?: string;
-      tradeStrategy?: string;
       stopLoss?: string;
       takeProfit?: string;
     },
@@ -68,12 +67,7 @@ export class TradebotController {
       tradebot,
       data,
     );
-    return (
-      updatedTradebot.id +
-      ' is updated' +
-      ' and tradebot = ' +
-      updatedTradebot.toJSON()
-    );
+    return tradebot.id + ' update ' + ' is ' + updatedTradebot;
   }
 
   @Post(':tradebotId')

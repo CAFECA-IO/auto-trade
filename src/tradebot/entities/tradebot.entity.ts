@@ -10,7 +10,6 @@ export class Tradebot {
     this.created_at = new Date();
     this.updated_at = new Date();
     this.suggestion = process.env.SUGGESTION;
-    this.tradeStrategy = process.env.TRADE_STRATEGY;
     this.stopLoss = process.env.STOP_LOSS;
     this.takeProfit = process.env.TAKE_PROFIT;
     this.holdingStatus = 'WAIT';
@@ -30,7 +29,6 @@ export class Tradebot {
   wallet: HDNodeWallet | Wallet;
   dewt: string;
   suggestion: string;
-  tradeStrategy: string;
   stopLoss: string;
   takeProfit: string;
   currentAsset: myAsset;

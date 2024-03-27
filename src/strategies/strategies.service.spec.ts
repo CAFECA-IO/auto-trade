@@ -64,16 +64,6 @@ describe('StrategiesService', () => {
     expect(ETHSuggestion).toBe('BUY');
   });
 
-  it('should run executeStrategy', async () => {
-    const suggestion = 'BUY';
-    const holdingStatus = 'BUY';
-    const result = await strategiesService.getTradeStrategy('autoArima', {
-      suggestion: suggestion,
-      holdingStatus: holdingStatus,
-    });
-    expect(result).toBe('WAIT');
-  });
-
   it('should run takeProfit', async () => {
     const openPrice = 100;
     const currentPrice = 120;
@@ -119,13 +109,12 @@ describe('StrategiesService', () => {
       'autoArima',
       'autoArima',
       'autoArima',
-      'autoArima',
       priceData,
     );
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-2093.879039695004);
+    expect(sum).toBe(-67.06188301500049);
   });
 
   it('should backtest use api', async () => {
@@ -172,12 +161,11 @@ describe('StrategiesService', () => {
       'autoArima',
       'autoArima',
       'autoArima',
-      'autoArima',
       ETHPriceArray,
     );
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-347.9295500000012);
+    expect(sum).toBe(-214.9824);
   });
 });
