@@ -8,12 +8,6 @@ export class StrategiesService {
     return suggestion;
   }
 
-  async getTradeStrategy(strategyName: string, data: Record<string, any>) {
-    const strategyModule = await import('./strategy/' + strategyName);
-    const tradeStrategy = await strategyModule.tradeStrategy(data);
-    return tradeStrategy;
-  }
-
   async getTakeProfit(strategyName: string, data: Record<string, any>) {
     const strategyModule = await import('./strategy/' + strategyName);
     const takeProfit = await strategyModule.takeProfit(data);
@@ -25,7 +19,7 @@ export class StrategiesService {
     const stopLoss = await strategyModule.stopLoss(data);
     return stopLoss;
   }
-  async backTesting(suggestion, strategy, stopLoss, takeProfit, priceData) {
+  async backTesting(suggestion, stopLoss, takeProfit, priceData) {
     let holdingStatus = 'WAIT';
     let openPrice;
     let openSpreadFee;
@@ -37,49 +31,49 @@ export class StrategiesService {
       let stopLossResult;
       let takeProfitResult;
       const suggestionResult = await this.getSuggestion(suggestion, {
+        currentPrice: currentPrice,
         priceArray: priceArray.slice(index - 30, index),
         spreadFee: spreadFee,
-      });
-      const tradeStrategy = await this.getTradeStrategy(strategy, {
-        suggestion: suggestionResult,
         holdingStatus: holdingStatus,
       });
       if (holdingStatus !== 'WAIT') {
         stopLossResult = await this.getStopLoss(stopLoss, {
           openPrice: openPrice,
-          currentPrice: currentPrice,
+          currentPrice: currentPrice + spreadFee,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
         });
         takeProfitResult = await this.getTakeProfit(takeProfit, {
           openPrice: openPrice,
-          currentPrice: currentPrice,
+          currentPrice: currentPrice + spreadFee,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
         });
       }
       if (
-        tradeStrategy === 'CLOSE' ||
+        suggestionResult === 'CLOSE' ||
         stopLossResult === 'CLOSE' ||
         takeProfitResult === 'CLOSE'
       ) {
         if (holdingStatus === 'BUY') {
-          const profit = currentPrice - openPrice;
+          const profit = currentPrice - openPrice - openSpreadFee;
           tradeArray.push({
             openPrice: openPrice,
             price: currentPrice,
             openSpreadFee: openSpreadFee,
             profit: profit,
+            holdingStatus: holdingStatus,
             tradeStrategy: 'CLOSE-BUY',
           });
         }
         if (holdingStatus === 'SELL') {
-          const profit = openPrice - currentPrice;
+          const profit = openPrice - currentPrice - openSpreadFee;
           tradeArray.push({
             openPrice: openPrice,
             price: currentPrice,
             profit: profit,
             openSpreadFee: openSpreadFee,
+            holdingStatus: holdingStatus,
             tradeStrategy: 'CLOSE-SELL',
           });
         }
@@ -87,21 +81,17 @@ export class StrategiesService {
         openPrice = null;
         openSpreadFee = null;
       }
-      if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
-        holdingStatus = tradeStrategy;
+      if (suggestionResult !== 'WAIT' && holdingStatus === 'WAIT') {
         openSpreadFee = spreadFee;
-        if (holdingStatus === 'BUY') {
-          openPrice = currentPrice + openSpreadFee;
-        }
-        if (holdingStatus === 'SELL') {
-          openPrice = currentPrice - openSpreadFee;
-        }
+        holdingStatus = suggestionResult;
+        openPrice = JSON.parse(JSON.stringify(currentPrice));
         tradeArray.push({
           openPrice: openPrice,
           price: currentPrice,
           profit: 0,
           openSpreadFee: openSpreadFee,
-          tradeStrategy: tradeStrategy,
+          holdingStatus: holdingStatus,
+          suggestionResult: suggestionResult,
         });
       }
     }

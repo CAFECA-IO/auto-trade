@@ -150,13 +150,8 @@ export class TradebotService {
         tradebot.suggestion,
         {
           priceArray: priceArray,
+          currentPrice: quotation.data.price,
           spreadFee: quotation.data.spreadFee,
-        },
-      );
-      const tradeStrategy = await this.strategiesService.getTradeStrategy(
-        tradebot.tradeStrategy,
-        {
-          suggestion: suggestion,
           holdingStatus: tradebot.holdingStatus,
         },
       );
@@ -179,7 +174,7 @@ export class TradebotService {
         },
       );
       if (
-        tradeStrategy === 'CLOSE' ||
+        suggestion === 'CLOSE' ||
         takeProfit === 'CLOSE' ||
         stopLoss === 'CLOSE'
       ) {
@@ -232,7 +227,7 @@ export class TradebotService {
         );
         return 'Tradebot ' + tradebot.id + ' successfully closed position';
       }
-      if (tradeStrategy === 'BUY' || tradeStrategy === 'SELL') {
+      if (suggestion === 'BUY' || suggestion === 'SELL') {
         const register = await this.userService.registerUser(
           tradebot.wallet.address,
           tradebot.dewt,
@@ -247,7 +242,7 @@ export class TradebotService {
           );
         }
         quotation = await this.priceTickerService.getCFDQuotation(
-          tradeStrategy,
+          suggestion,
           instId,
         );
         const amount = this.trancsactionService.calculateAmount(
@@ -273,7 +268,7 @@ export class TradebotService {
           );
           return 'Tradebot ' + tradebot.id + ' failed to create position';
         }
-        tradebot.holdingStatus = tradeStrategy;
+        tradebot.holdingStatus = suggestion;
         tradebot.holdingInstId = instId;
         tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
         tradebot.openPrice = quotation.data.price;
@@ -364,16 +359,16 @@ export class TradebotService {
     tradebot: Tradebot,
     options: {
       suggestion?: string;
-      tradeStrategy?: string;
       stopLoss?: string;
       takeProfit?: string;
     },
-  ): Promise<Tradebot> {
+  ): Promise<boolean> {
+    if (!options.suggestion && !options.stopLoss && !options.takeProfit) {
+      this.logger.error('Tradebot ' + tradebot.id + ' update failed');
+      return false;
+    }
     if (options.suggestion) {
       tradebot.suggestion = options.suggestion;
-    }
-    if (options.tradeStrategy) {
-      tradebot.tradeStrategy = options.tradeStrategy;
     }
     if (options.stopLoss) {
       tradebot.stopLoss = options.stopLoss;
@@ -382,6 +377,6 @@ export class TradebotService {
       tradebot.takeProfit = options.takeProfit;
     }
     this.logger.log('Tradebot ' + tradebot.id + ' is updated');
-    return tradebot;
+    return true;
   }
 }
