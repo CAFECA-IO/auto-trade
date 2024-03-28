@@ -36,7 +36,6 @@ export class Tradebot {
   holdingInstId: string;
   positionId: string;
   openPrice: number;
-  absSpreadFee: number;
   endAsset: myAsset;
   isRunning: boolean;
   timer?: NodeJS.Timeout;

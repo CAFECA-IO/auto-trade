@@ -9,17 +9,15 @@ export function suggestion(data: {
   let suggestion = 'WAIT';
   const arima = new ARIMA('auto');
   arima.train(data.priceArray);
-  const AbsspreadFee = Math.abs(data.spreadFee);
-  const arimaPredict = arima.predict(36);
+  // const AbsspreadFee = Math.abs(data.spreadFee);
+  const arimaPredict = arima.predict(15);
   const predict: number[] = arimaPredict[0];
-  const predictMax = Math.max(...predict);
-  const predictMin = Math.min(...predict);
-  const predictProfit = AbsspreadFee * 2.2;
+  // const predictProfit = AbsspreadFee * 2.8;
   const currentPrice = data.currentPrice;
-  if (predictMax - currentPrice > predictProfit) {
+  if (predict[predict.length - 1] > currentPrice) {
     suggestion = 'BUY';
   }
-  if (currentPrice - predictMin > predictProfit) {
+  if (predict[predict.length - 1] < currentPrice) {
     suggestion = 'SELL';
   }
   if (suggestion === 'WAIT') {
@@ -40,18 +38,20 @@ export function takeProfit(data: {
   spreadFee: number;
   holdingStatus: string;
 }) {
-  const AbsOpenSpreadFee = Math.abs(data.spreadFee);
+  const AbsSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const takeProfit = AbsOpenSpreadFee * 1.8;
+  const takeProfit = AbsSpreadFee * 1.5;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (currentPrice - openPrice > takeProfit) {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Buy price
+    if (currentPrice - AbsSpreadFee - openPrice > takeProfit) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (openPrice - currentPrice < takeProfit) {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Sell price
+    if (openPrice - (currentPrice + AbsSpreadFee) > takeProfit) {
       return 'CLOSE';
     }
   }
@@ -63,18 +63,20 @@ export function stopLoss(data: {
   spreadFee: number;
   holdingStatus: string;
 }) {
-  const AbsOpenSpreadFee = Math.abs(data.spreadFee);
+  const AbsSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const stopLoss = AbsOpenSpreadFee * 0.6;
+  const stopLoss = AbsSpreadFee * 0.7;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (openPrice - currentPrice > stopLoss) {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Buy price
+    if (openPrice - (currentPrice + AbsSpreadFee) > stopLoss) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (currentPrice - openPrice > stopLoss) {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Sell price
+    if (currentPrice - AbsSpreadFee - openPrice > stopLoss) {
       return 'CLOSE';
     }
   }

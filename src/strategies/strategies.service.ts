@@ -22,7 +22,6 @@ export class StrategiesService {
   async backTesting(suggestion, stopLoss, takeProfit, priceData) {
     let holdingStatus = 'WAIT';
     let openPrice;
-    let openSpreadFee;
     const priceArray: number[] = priceData;
     const tradeArray = [];
     for (let index = 30; index < priceArray.length; index++) {
@@ -39,13 +38,13 @@ export class StrategiesService {
       if (holdingStatus !== 'WAIT') {
         stopLossResult = await this.getStopLoss(stopLoss, {
           openPrice: openPrice,
-          currentPrice: currentPrice + spreadFee,
+          currentPrice: currentPrice,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
         });
         takeProfitResult = await this.getTakeProfit(takeProfit, {
           openPrice: openPrice,
-          currentPrice: currentPrice + spreadFee,
+          currentPrice: currentPrice,
           spreadFee: spreadFee,
           holdingStatus: holdingStatus,
         });
@@ -56,44 +55,41 @@ export class StrategiesService {
         takeProfitResult === 'CLOSE'
       ) {
         if (holdingStatus === 'BUY') {
-          const profit = currentPrice - openPrice - openSpreadFee;
+          const profit = currentPrice - spreadFee - openPrice;
           tradeArray.push({
             openPrice: openPrice,
             price: currentPrice,
-            openSpreadFee: openSpreadFee,
             profit: profit,
             holdingStatus: holdingStatus,
             tradeStrategy: 'CLOSE-BUY',
           });
         }
         if (holdingStatus === 'SELL') {
-          const profit = openPrice - currentPrice - openSpreadFee;
+          const profit = openPrice - (currentPrice + spreadFee);
           tradeArray.push({
             openPrice: openPrice,
             price: currentPrice,
             profit: profit,
-            openSpreadFee: openSpreadFee,
             holdingStatus: holdingStatus,
             tradeStrategy: 'CLOSE-SELL',
           });
         }
         holdingStatus = 'WAIT';
         openPrice = null;
-        openSpreadFee = null;
+        continue;
       }
       if (suggestionResult !== 'WAIT' && holdingStatus === 'WAIT') {
-        openSpreadFee = spreadFee;
         holdingStatus = suggestionResult;
         openPrice = JSON.parse(JSON.stringify(currentPrice));
         tradeArray.push({
           openPrice: openPrice,
           price: currentPrice,
           profit: 0,
-          openSpreadFee: openSpreadFee,
           holdingStatus: holdingStatus,
           suggestionResult: suggestionResult,
         });
       }
+      continue;
     }
     return { tradeArray };
   }

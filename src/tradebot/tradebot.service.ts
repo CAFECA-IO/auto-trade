@@ -5,7 +5,6 @@ import { DewtService } from '../dewt/dewt.service';
 import { PriceTickerService } from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
-import { QuotationDto } from '../price_ticker/dto/quotation.dto';
 
 @Injectable()
 export class TradebotService {
@@ -135,22 +134,13 @@ export class TradebotService {
         ' purchase strategy',
     );
     try {
-      let quotation: QuotationDto;
-      if (tradebot.holdingStatus === 'WAIT') {
-        this.logger.log('Tradebot ' + tradebot.id + ' hasn`t holding position');
-        quotation = await this.priceTickerService.getCFDQuotation(instId);
-      } else {
-        quotation = await this.priceTickerService.getCFDQuotation(
-          tradebot.holdingStatus,
-          tradebot.holdingInstId,
-        );
-      }
+      let quotation = await this.priceTickerService.getCFDQuotation(instId);
       const priceArray = await this.priceTickerService.getCandlesticks(instId);
       const suggestion = await this.strategiesService.getSuggestion(
         tradebot.suggestion,
         {
           priceArray: priceArray,
-          currentPrice: quotation.data.price,
+          currentPrice: quotation.data.spotPrice,
           spreadFee: quotation.data.spreadFee,
           holdingStatus: tradebot.holdingStatus,
         },
@@ -159,8 +149,8 @@ export class TradebotService {
         tradebot.takeProfit,
         {
           openPrice: tradebot.openPrice,
-          currentPrice: quotation.data.price,
-          spreadFee: tradebot.absSpreadFee,
+          currentPrice: quotation.data.spotPrice,
+          spreadFee: quotation.data.spreadFee,
           holdingStatus: tradebot.holdingStatus,
         },
       );
@@ -168,8 +158,8 @@ export class TradebotService {
         tradebot.stopLoss,
         {
           openPrice: tradebot.openPrice,
-          currentPrice: quotation.data.price,
-          spreadFee: tradebot.absSpreadFee,
+          currentPrice: quotation.data.spotPrice,
+          spreadFee: quotation.data.spreadFee,
           holdingStatus: tradebot.holdingStatus,
         },
       );
@@ -189,6 +179,17 @@ export class TradebotService {
           );
           this.logger.error(
             'create dewt for tradebot ' + tradebot.id + ' register failed',
+          );
+        }
+        if (tradebot.holdingStatus === 'BUY') {
+          quotation = await this.priceTickerService.getCFDQuotation(
+            'SELL',
+            tradebot.holdingInstId,
+          );
+        } else if (tradebot.holdingStatus === 'SELL') {
+          quotation = await this.priceTickerService.getCFDQuotation(
+            'BUY',
+            tradebot.holdingInstId,
           );
         }
         const closeCFDOrderDto =
@@ -218,7 +219,6 @@ export class TradebotService {
         tradebot.updated_at = new Date();
         tradebot.positionId = null;
         tradebot.openPrice = null;
-        tradebot.absSpreadFee = null;
         tradebot.currentAsset = await this.userService.getMyAsset(
           tradebot.dewt,
         );
@@ -272,7 +272,6 @@ export class TradebotService {
         tradebot.holdingInstId = instId;
         tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
         tradebot.openPrice = quotation.data.price;
-        tradebot.absSpreadFee = Math.abs(quotation.data.spreadFee);
         tradebot.updated_at = new Date();
         tradebot.currentAsset = await this.userService.getMyAsset(
           tradebot.dewt,
