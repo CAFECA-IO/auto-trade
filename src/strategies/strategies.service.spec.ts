@@ -56,10 +56,12 @@ describe('StrategiesService', () => {
       3210.38, 3221.28, 3220.03, 3219.03, 3220.01, 3224.01, 3228.11, 3212.89,
       3211.79, 3224.31, 3216.85, 3207.8, 3224.44, 3220.49, 3212.7, 3219.26,
     ];
-    const spreadFee = 0.05;
+    const spreadFee = 5;
     const ETHSuggestion = await strategiesService.getSuggestion('autoArima', {
+      currentPrice: 3219.26,
       priceArray: ETHPriceArray,
       spreadFee: spreadFee,
+      holdingStatus: 'WAIT',
     });
     expect(ETHSuggestion).toBe('BUY');
   });
@@ -93,7 +95,7 @@ describe('StrategiesService', () => {
   });
 
   it('should backtest use csv', async () => {
-    console.log = () => {};
+    // console.log = () => {};
     // Read the file
     const csvContent = fs.readFileSync('src/strategies/ETH-USD.csv', 'utf8');
     // Split the content into rows (assuming newline-separated rows)
@@ -114,7 +116,7 @@ describe('StrategiesService', () => {
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-67.06188301500049);
+    expect(sum).toBe(-1069.9531315100012);
   });
 
   it('should backtest use api', async () => {
@@ -166,6 +168,6 @@ describe('StrategiesService', () => {
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-214.9824);
+    expect(sum).toBe(-673.9419000000021);
   });
 });
