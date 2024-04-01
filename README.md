@@ -1,6 +1,6 @@
 ## auto-trade
 
-auto is an open source project that aims to provide a simple and easy to use trading bot for the TideBit . The bot is written in TypeScript and uses the NestJS framework.
+auto is an open source project that aims to provide a simple and easy to use trading bot for the TideBit DeFi . The bot is written in TypeScript and uses the NestJS framework.
 
 ## Description
 
@@ -28,7 +28,6 @@ npm install
 
 ```json
 SUGGESTION = "autoArima"
-TRADE_STRATEGY = "autoArima"
 STOP_LOSS = "autoArima"
 TAKE_PROFIT = "autoArima"
 PRIVATE_KEY = "YOUR_PRIVATE_KEY"// Your could create tradebot by your own Wallet private key
@@ -42,67 +41,57 @@ Create your own strategy in the `src/strategies/strategy` directory and modify `
 import * as ARIMA from 'arima';
 
 export function suggestion(data: {
+  currentPrice: number;
   priceArray: number[];
   spreadFee: number;
+  holdingStatus: string;
 }) {
   let suggestion = 'WAIT';
   const arima = new ARIMA('auto');
   arima.train(data.priceArray);
-  const AbsspreadFee = Math.abs(data.spreadFee);
+  // const AbsspreadFee = Math.abs(data.spreadFee);
   const arimaPredict = arima.predict(15);
   const predict: number[] = arimaPredict[0];
-  const predictMax = Math.max(...predict);
-  const predictMin = Math.min(...predict);
-  const predictProfit = AbsspreadFee * 2.5;
-  const currentPrice = data.priceArray[data.priceArray.length - 1];
-  if (predictMax - currentPrice > predictProfit) {
+  // const predictProfit = AbsspreadFee * 2.8;
+  const currentPrice = data.currentPrice;
+  if (predict[predict.length - 1] > currentPrice) {
     suggestion = 'BUY';
-    return suggestion;
   }
-  if (currentPrice - predictMin > predictProfit) {
+  if (predict[predict.length - 1] < currentPrice) {
     suggestion = 'SELL';
+  }
+  if (suggestion === 'WAIT') {
     return suggestion;
   }
-  return suggestion;
-}
-
-export function tradeStrategy(data: {
-  suggestion: string;
-  holdingStatus: string;
-}) {
   if (data.holdingStatus === 'WAIT') {
-    return data.suggestion;
+    return suggestion;
   }
-  if (data.holdingStatus === 'BUY') {
-    if (data.suggestion === 'SELL') {
-      return 'CLOSE';
-    }
-  }
-  if (data.holdingStatus === 'SELL') {
-    if (data.suggestion === 'BUY') {
-      return 'CLOSE';
-    }
+  if (suggestion !== data.holdingStatus) {
+    return 'CLOSE';
   }
   return 'WAIT';
 }
+
 export function takeProfit(data: {
   openPrice: number;
   currentPrice: number;
   spreadFee: number;
   holdingStatus: string;
 }) {
-  const AbsOpenSpreadFee = Math.abs(data.spreadFee);
+  const AbsSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const takeProfit = AbsOpenSpreadFee * 2.2;
+  const takeProfit = AbsSpreadFee * 1.5;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (currentPrice - openPrice > takeProfit) {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Buy price
+    if (currentPrice - AbsSpreadFee - openPrice > takeProfit) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (openPrice - currentPrice < takeProfit) {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Sell price
+    if (openPrice - (currentPrice + AbsSpreadFee) > takeProfit) {
       return 'CLOSE';
     }
   }
@@ -114,23 +103,26 @@ export function stopLoss(data: {
   spreadFee: number;
   holdingStatus: string;
 }) {
-  const AbsOpenSpreadFee = Math.abs(data.spreadFee);
+  const AbsSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const stopLoss = AbsOpenSpreadFee * 1.5;
+  const stopLoss = AbsSpreadFee * 0.7;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
-    if (openPrice - currentPrice > stopLoss) {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Buy price
+    if (openPrice - (currentPrice + AbsSpreadFee) > stopLoss) {
       return 'CLOSE';
     }
   }
   if (holdingStatus === 'SELL') {
-    if (currentPrice - openPrice > stopLoss) {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Sell price
+    if (currentPrice - AbsSpreadFee - openPrice > stopLoss) {
       return 'CLOSE';
     }
   }
   return 'WAIT';
 }
+
 ```
 
 > [!WARNING]
@@ -206,7 +198,6 @@ Parameters
 | name          | type          | required | default |
 | ------------- | ------------- | -------- | ------- |
 | suggestion    | string        | false    | null    |
-| tradeStrategy | string        | false    | null    |
 | stopLoss      | string        | false    | null    |
 | takeProfit    | string        | false    | null    |
 
@@ -240,7 +231,7 @@ POST /tradebot/tradebotId
 
 | name      | type    | required | default |description |
 | --------  | ------- | -------- | ------- | ----- |
-| command   | string  | true    | null    | "run" or "stop"
+| command   | string  | true    | null    | "run" or "stop" or "deposit" |
 
 ### Request Example
 
