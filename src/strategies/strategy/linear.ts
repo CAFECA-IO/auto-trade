@@ -7,7 +7,7 @@ export function suggestion(data: {
   let suggestion = 'WAIT';
   const priceArray = data.priceArray;
   const currentPrice = data.currentPrice;
-  const lastHourPrice = priceArray[priceArray.length - 11];
+  const lastHourPrice = priceArray[priceArray.length - 35];
   if (currentPrice > lastHourPrice) {
     suggestion = 'BUY';
   }

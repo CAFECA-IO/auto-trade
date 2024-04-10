@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PriceTickerService } from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
 import { QuotationDto } from './dto/quotation.dto';
+import * as fs from 'fs';
 
 describe('PriceTickerService', () => {
   let service: PriceTickerService;
@@ -35,5 +36,24 @@ describe('PriceTickerService', () => {
       .spyOn(service, 'getCandlesticks')
       .mockImplementation(async () => array);
     expect(await service.getCandlesticks()).toStrictEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('should return an array of candlestick', async () => {
+    let etharr = [];
+    for (let i = 0; i < 11; i++) {
+      const r = await service.getCandlesticksV2(
+        'ETH-USDT',
+        '5m',
+        Date.now() - 90000000 * (i + 1),
+        Date.now() - 90000000 * i,
+      );
+      const tempArr = r.data.candlesticks.candlesticks.map(
+        (item) => item.y.close,
+      );
+      etharr = tempArr.concat(etharr);
+    }
+    // console.log(etharr);
+    // use fs to write the etharr to a file
+    fs.writeFileSync('src/strategies/etharr.txt', JSON.stringify(etharr));
   });
 });

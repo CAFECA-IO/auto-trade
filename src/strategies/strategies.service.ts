@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Environment } from './strategy/rl-dqn/environment';
+import * as fs from 'fs';
+import { TradeAgent } from './strategy/rl-dqn/tradeAgent';
+import { train } from './strategy/rl-dqn/train';
 
 @Injectable()
 export class StrategiesService {
@@ -92,5 +96,22 @@ export class StrategiesService {
       continue;
     }
     return { tradeArray };
+  }
+
+  async trainDqn() {
+    // const csvContent = fs.readFileSync('src/strategies/ETH-USD.csv', 'utf8');
+    const etharr = fs.readFileSync('src/strategies/etharr.txt', 'utf8');
+    console.log("🚀 ~ StrategiesService ~ trainDqn ~ etharr:", etharr)
+    const rows = etharr.split('\n');
+    // Define the index of the column you want to read
+    const closeIndex = 4;
+    // Extract the data from the specified column
+    const priceData = rows.map((row) => {
+      const columns = row.split(','); // Split by comma (adjust delimiter as necessary)
+      return parseFloat(columns[closeIndex]);
+    });
+    const env = new Environment(priceData.slice(1));
+    const tradeAgent = new TradeAgent(env);
+    await train(tradeAgent);
   }
 }

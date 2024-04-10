@@ -66,7 +66,7 @@ export function stopLoss(data: {
   const AbsSpreadFee = Math.abs(data.spreadFee);
   const openPrice = data.openPrice;
   const currentPrice = data.currentPrice;
-  const stopLoss = AbsSpreadFee * 0.7;
+  const stopLoss = AbsSpreadFee * 1;
   const holdingStatus = data.holdingStatus;
   if (holdingStatus === 'BUY') {
     // Info: (20240328 - Jacky) Current Buy price is lower than the open Buy price

@@ -1,0 +1,50 @@
+import * as tf from '@tensorflow/tfjs-node';
+import { Environment } from './environment';
+import * as fs from 'fs';
+import { TradeAgent } from './tradeAgent';
+import { train } from './train';
+
+describe('RL test', () => {
+  it('should be run', () => {
+    // Create a sequential model
+    const model = tf.sequential();
+
+    // Add layers to the model
+    model.add(
+      tf.layers.dense({ units: 2, inputShape: [2], activation: 'relu' }),
+    );
+    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+
+    // Compile the model
+    model.compile({
+      optimizer: 'sgd',
+      loss: 'binaryCrossentropy',
+      metrics: ['accuracy'],
+    });
+
+    // Generate some dummy data
+    const xs = tf.tensor2d([
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1],
+    ]);
+    const ys = tf.tensor2d([[0], [1], [1], [0]]);
+
+    // Train the model
+    model.fit(xs, ys, { epochs: 100 }).then(() => {
+      // Make predictions
+      const prediction = model.predict(tf.tensor2d([[0, 1]]));
+      console.log('Prediction:', prediction);
+    });
+  });
+  it('DQN', async () => {
+    // Read the file
+    const etharr = JSON.parse(
+      fs.readFileSync('src/strategies/etharr.txt', 'utf8'),
+    );
+    const env = new Environment(etharr);
+    const tradeAgent = new TradeAgent(env);
+    await train(tradeAgent);
+  });
+});
