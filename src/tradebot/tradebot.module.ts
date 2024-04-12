@@ -4,7 +4,7 @@ import { TradebotController } from './tradebot.controller';
 import { PriceTickerModule } from '../price_ticker/price_ticker.module';
 import { StrategiesModule } from '../strategies/strategies.module';
 import { DewtModule } from '../dewt/dewt.module';
-import PriceTickerService from 'src/price_ticker/price_ticker.service';
+import { PriceTickerService } from 'src/price_ticker/price_ticker.service';
 import { StrategiesService } from 'src/strategies/strategies.service';
 import { DewtService } from 'src/dewt/dewt.service';
 import { TransactionModule } from 'src/transaction/transaction.module';

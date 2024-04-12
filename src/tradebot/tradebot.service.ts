@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Tradebot } from './entities/tradebot.entity';
 import { UserService } from '../user/user.service';
 import { DewtService } from '../dewt/dewt.service';
-import PriceTickerService from '../price_ticker/price_ticker.service';
+import { PriceTickerService } from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { copyWeights } from '../strategies/strategy/rl-dqn/dqn';

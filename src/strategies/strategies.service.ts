@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Environment } from './strategy/rl-dqn/environment';
+import { TradeAgent } from './strategy/rl-dqn/tradeAgent';
+import { train } from './strategy/rl-dqn/train';
+import * as fs from 'fs';
 
 @Injectable()
 export class StrategiesService {
@@ -93,11 +97,8 @@ export class StrategiesService {
     }
     return { tradeArray };
   }
-<<<<<<< Updated upstream
-=======
 
   async trainDqn() {
-    // const csvContent = fs.readFileSync('src/strategies/ETH-USD.csv', 'utf8');
     const etharr = JSON.parse(
       fs.readFileSync('src/strategies/etharr.txt', 'utf8'),
     );
@@ -105,5 +106,4 @@ export class StrategiesService {
     const tradeAgent = new TradeAgent(env);
     await train(tradeAgent);
   }
->>>>>>> Stashed changes
 }
