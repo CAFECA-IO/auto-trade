@@ -49,7 +49,6 @@ export class Environment {
     let profit = 0;
     let reward = 0;
     this.currentPrice = this.priceArray[this.current_step];
-    // console.log("🚀 ~ Environment ~ step ~ currentPrice:", this.currentPrice)
     this.spreadFee = 0.005 * this.currentPrice;
     if (action === 3) {
       if (this.holdingStatus === 0) {
@@ -70,7 +69,8 @@ export class Environment {
     }
     if (action === 1) {
       if (this.holdingStatus === 0) {
-        this.openPrice = JSON.parse(JSON.stringify(this.currentPrice));
+        const currentPriceStr = JSON.stringify(this.currentPrice);
+        this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 1;
         reward = 25;
         if (this.openPrice < this.priceArray[this.current_step + 10]) {
@@ -84,7 +84,8 @@ export class Environment {
     }
     if (action === 2) {
       if (this.holdingStatus === 0) {
-        this.openPrice = JSON.parse(JSON.stringify(this.currentPrice));
+        const currentPriceStr = JSON.stringify(this.currentPrice);
+        this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 2;
         reward = 25;
         if (this.openPrice > this.priceArray[this.current_step + 10]) {
@@ -96,26 +97,6 @@ export class Environment {
         reward = -35;
       }
     }
-    if (profit > 50) {
-      reward += 20;
-      console.log(
-        'wcnb',
-        this.current_step,
-        profit,
-        this.currentPrice,
-        this.openPrice,
-      );
-    }
-    if (profit < -50) {
-      reward -= 15;
-      console.log(
-        'wcnm',
-        this.current_step,
-        profit,
-        this.currentPrice,
-        this.openPrice,
-      );
-    }
     this.current_step += 1;
     if (this.current_step >= this.priceArray.length) {
       this.done = true;
@@ -125,9 +106,6 @@ export class Environment {
         reward = -30;
       }
     }
-    this.actionLog.push(action);
-    this.profitLog.push(profit);
-    this.rewardLog.push(reward);
     return {
       previousPrice: this.priceArray.slice(-100),
       currentPrice: this.currentPrice,

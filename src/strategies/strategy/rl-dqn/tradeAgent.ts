@@ -125,11 +125,12 @@ export class TradeAgent {
       });
     }
     const nextState = this.env.step(action);
+    const nextStateFlat = Object.values(nextState).slice(0, 5).flat();
     this.replayMemory.append([
       state,
       action,
       nextState.reward,
-      Object.values(nextState).slice(0, 5),
+      nextStateFlat,
       this.env.done,
     ]);
 
@@ -159,32 +160,25 @@ export class TradeAgent {
     const lossFunction = () =>
       tf.tidy(() => {
         // console.log(batch.map((example) => example[0]));
-        const stateTensor = tf.tensor2d(batch.map((example) => example[0]));
-        const actionTensor = tf.tensor1d(
-          batch.map((example) => example[1]),
-          'int32',
-        );
+        const exampleState = batch.map((example) => example[0]);
+        const stateTensor = tf.tensor2d(exampleState);
+        const exampleAction = batch.map((example) => example[1]);
+        const actionTensor = tf.tensor1d(exampleAction, 'int32');
         let qs = this.onlineNetwork.apply(stateTensor, {
           training: true,
         });
         qs = (qs as tf.Tensor<tf.Rank>)
           .mul(tf.oneHot(actionTensor, this.NUM_ACTIONS))
           .sum(-1);
-        const rewardTensor = tf.tensor1d(batch.map((example) => example[2]));
-        const nextStateTensor = tf.tensor2d(
-          batch.map((example) => example[3].flat()),
-        );
-        // const nextStateTensor = getStateTensor(
-        //   batch.map((example) => example[3]),
-        //   this.game.height,
-        //   this.game.width,
-        // );
+        const exampleReward = batch.map((example) => example[2]);
+        const rewardTensor = tf.tensor1d(exampleReward);
+        const exampleNextState = batch.map((example) => example[3]);
+        const nextStateTensor = tf.tensor2d(exampleNextState);
         const nextMaxQTensor = (
           this.targetNetwork.predict(nextStateTensor) as tf.Tensor<tf.Rank>
         ).max(-1);
-        const doneMask = tf
-          .scalar(1)
-          .sub(tf.tensor1d(batch.map((example) => example[4])));
+        const exampleDone = batch.map((example) => example[4]);
+        const doneMask = tf.scalar(1).sub(tf.tensor1d(exampleDone));
         const targetQs = rewardTensor.add(
           nextMaxQTensor.mul(doneMask).mul(gamma),
         );
