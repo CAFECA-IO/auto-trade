@@ -8,8 +8,7 @@ export class PriceTickerController {
   async checkPrice() {
     const quotation = await this.priceTickerService.getCFDQuotation();
     const priceArray = await this.priceTickerService.getCandlesticks();
-    return (
-      'quotation = ' + JSON.stringify(quotation) + ' priceArray = ' + priceArray
-    );
+    const quotationString = JSON.stringify(quotation);
+    return 'quotation = ' + quotationString + ' priceArray = ' + priceArray;
   }
 }
