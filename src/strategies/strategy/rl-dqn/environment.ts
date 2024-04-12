@@ -68,7 +68,8 @@ export class Environment {
     }
     if (action === 1) {
       if (this.holdingStatus === 0) {
-        this.openPrice = JSON.parse(JSON.stringify(this.currentPrice));
+        const currentPriceStr = JSON.stringify(this.currentPrice);
+        this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 1;
         reward = 20;
         if (this.openPrice < this.priceArray[this.current_step + 10]) {
@@ -82,7 +83,8 @@ export class Environment {
     }
     if (action === 2) {
       if (this.holdingStatus === 0) {
-        this.openPrice = JSON.parse(JSON.stringify(this.currentPrice));
+        const currentPriceStr = JSON.stringify(this.currentPrice);
+        this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 2;
         reward = 20;
         if (this.openPrice > this.priceArray[this.current_step + 10]) {
@@ -93,24 +95,6 @@ export class Environment {
       } else {
         reward = -20;
       }
-    }
-    if (profit > 50) {
-      console.log(
-        'wcnb',
-        this.current_step,
-        profit,
-        this.currentPrice,
-        this.openPrice,
-      );
-    }
-    if (profit < -50) {
-      console.log(
-        'wcnm',
-        this.current_step,
-        profit,
-        this.currentPrice,
-        this.openPrice,
-      );
     }
     this.current_step += 1;
     if (this.current_step >= this.priceArray.length) {

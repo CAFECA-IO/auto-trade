@@ -13,7 +13,8 @@ describe('RL test', () => {
     model.add(
       tf.layers.dense({ units: 2, inputShape: [2], activation: 'relu' }),
     );
-    model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }));
+    const denseLayer = tf.layers.dense({ units: 2, activation: 'relu' });
+    model.add(denseLayer);
 
     // Compile the model
     model.compile({
@@ -34,7 +35,8 @@ describe('RL test', () => {
     // Train the model
     model.fit(xs, ys, { epochs: 100 }).then(() => {
       // Make predictions
-      const prediction = model.predict(tf.tensor2d([[0, 1]]));
+      const tensor = tf.tensor2d([[0, 1]]);
+      const prediction = model.predict(tensor);
       console.log('Prediction:', prediction);
     });
   });
