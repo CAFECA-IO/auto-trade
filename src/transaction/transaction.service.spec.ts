@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HttpModule } from '@nestjs/axios';
 import { TransactionService } from './transaction.service';
 import { PriceTickerModule } from '../price_ticker/price_ticker.module';
-import { PriceTickerService } from '../price_ticker/price_ticker.service';
+import PriceTickerService from '../price_ticker/price_ticker.service';
 import { ReturnCreateCFDOrderDto } from './dto/returnCreateCFDOrder.dto';
 import { ReturnCloseCFDOrderDto } from './dto/returnCloseCFDOrder.dto';
 import { CreateDepositDto } from './dto/createDeposit.dto';

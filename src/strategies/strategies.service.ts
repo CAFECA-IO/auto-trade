@@ -93,4 +93,17 @@ export class StrategiesService {
     }
     return { tradeArray };
   }
+<<<<<<< Updated upstream
+=======
+
+  async trainDqn() {
+    // const csvContent = fs.readFileSync('src/strategies/ETH-USD.csv', 'utf8');
+    const etharr = JSON.parse(
+      fs.readFileSync('src/strategies/etharr.txt', 'utf8'),
+    );
+    const env = new Environment(etharr);
+    const tradeAgent = new TradeAgent(env);
+    await train(tradeAgent);
+  }
+>>>>>>> Stashed changes
 }

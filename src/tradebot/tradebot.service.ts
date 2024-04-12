@@ -2,9 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Tradebot } from './entities/tradebot.entity';
 import { UserService } from '../user/user.service';
 import { DewtService } from '../dewt/dewt.service';
-import { PriceTickerService } from '../price_ticker/price_ticker.service';
+import PriceTickerService from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
+import { copyWeights } from '../strategies/strategy/rl-dqn/dqn';
+import * as tf from '@tensorflow/tfjs-node';
+import { ReplayMemory } from '../strategies/strategy/rl-dqn/replay_memory';
+import { QuotationDto } from '../price_ticker/dto/quotation.dto';
 
 @Injectable()
 export class TradebotService {
@@ -125,16 +129,15 @@ export class TradebotService {
       );
     }
   }
-  async executeStrategy(tradebot: Tradebot, instId: string) {
+  async runStrategy(tradebot: Tradebot, instId: string): Promise<string> {
     this.logger.log(
-      'Tradebot ' +
-        tradebot.id +
-        ' is executing ' +
-        instId +
-        ' purchase strategy',
+      'Tradebot ' + tradebot.id + ' is executing ' + instId + ' strategy',
     );
     try {
-      let quotation = await this.priceTickerService.getCFDQuotation(instId);
+      const quotation = await this.priceTickerService.getCFDQuotation(
+        'BUY',
+        instId,
+      );
       const priceArray = await this.priceTickerService.getCandlesticks(instId);
       const suggestion = await this.strategiesService.getSuggestion(
         tradebot.suggestion,
@@ -168,6 +171,34 @@ export class TradebotService {
         takeProfit === 'CLOSE' ||
         stopLoss === 'CLOSE'
       ) {
+        return 'CLOSE';
+      }
+      if (suggestion === 'BUY' || suggestion === 'SELL') {
+        return suggestion;
+      }
+      return 'WAIT';
+    } catch (error) {
+      this.logger.error(
+        tradebot.id + ' Error executing strategy: ' + error.message,
+      );
+    }
+  }
+
+  async executeTrade(tradebot: Tradebot, instId: string, action: string) {
+    this.logger.log(
+      'Tradebot ' + tradebot.id + ' is executing ' + action + ' in ' + instId,
+    );
+    try {
+      let quotation;
+      if (action === 'WAIT') {
+        if (tradebot.holdingStatus !== 'WAIT') {
+          this.logger.log('Tradebot ' + tradebot.id + ' is holding position');
+          return 'Tradebot ' + tradebot.id + ' is holding position';
+        }
+        this.logger.log('Tradebot ' + tradebot.id + ' is waiting for chance');
+        return 'Tradebot ' + tradebot.id + ' is waiting for chance';
+      }
+      if (action === 'CLOSE') {
         const register = await this.userService.registerUser(
           tradebot.wallet.address,
           tradebot.dewt,
@@ -218,7 +249,7 @@ export class TradebotService {
         tradebot.holdingInstId = null;
         tradebot.updated_at = new Date();
         tradebot.positionId = null;
-        tradebot.openPrice = null;
+        tradebot.openPrice = 0;
         tradebot.currentAsset = await this.userService.getMyAsset(
           tradebot.dewt,
         );
@@ -227,78 +258,66 @@ export class TradebotService {
         );
         return 'Tradebot ' + tradebot.id + ' successfully closed position';
       }
-      if (suggestion === 'BUY' || suggestion === 'SELL') {
-        const register = await this.userService.registerUser(
+
+      const register = await this.userService.registerUser(
+        tradebot.wallet.address,
+        tradebot.dewt,
+      );
+      if (register.success == false) {
+        tradebot.dewt = await this.dewtService.create(
           tradebot.wallet.address,
-          tradebot.dewt,
-        );
-        if (register.success == false) {
-          tradebot.dewt = await this.dewtService.create(
-            tradebot.wallet.address,
-            tradebot.wallet.privateKey.slice(2),
-          );
-          this.logger.error(
-            'create dewt for tradebot ' + tradebot.id + ' register is failed',
-          );
-        }
-        quotation = await this.priceTickerService.getCFDQuotation(
-          suggestion,
-          instId,
-        );
-        const amount = this.trancsactionService.calculateAmount(
-          tradebot.currentAsset.data.balance.available,
-          quotation.data.price,
-        );
-        const createCFDOrderDto =
-          await this.trancsactionService.createCFDOrderDTO(quotation, amount);
-        const createCFDOrder = await this.trancsactionService.createCFDOrder(
-          tradebot.dewt,
           tradebot.wallet.privateKey.slice(2),
-          createCFDOrderDto,
         );
-        if (createCFDOrder.success == false) {
-          this.logger.error(
-            'Tradebot ' +
-              tradebot.id +
-              ' failed to create position, ' +
-              'message = ' +
-              createCFDOrder.message +
-              ', reason = ' +
-              createCFDOrder.reason,
-          );
-          return 'Tradebot ' + tradebot.id + ' failed to create position';
-        }
-        tradebot.holdingStatus = suggestion;
-        tradebot.holdingInstId = instId;
-        tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
-        tradebot.openPrice = quotation.data.price;
-        tradebot.updated_at = new Date();
-        tradebot.currentAsset = await this.userService.getMyAsset(
-          tradebot.dewt,
+        this.logger.error(
+          'create dewt for tradebot ' + tradebot.id + ' register is failed',
         );
-        this.logger.log(
+      }
+      quotation = await this.priceTickerService.getCFDQuotation(action, instId);
+      const amount = this.trancsactionService.calculateAmount(
+        tradebot.currentAsset.data.balance.available,
+        quotation.data.price,
+      );
+      const createCFDOrderDto =
+        await this.trancsactionService.createCFDOrderDTO(quotation, amount);
+      const createCFDOrder = await this.trancsactionService.createCFDOrder(
+        tradebot.dewt,
+        tradebot.wallet.privateKey.slice(2),
+        createCFDOrderDto,
+      );
+      if (createCFDOrder.success == false) {
+        this.logger.error(
           'Tradebot ' +
             tradebot.id +
-            ' created a ' +
-            tradebot.holdingStatus +
-            ' position in ' +
-            instId,
+            ' failed to create position, ' +
+            'message = ' +
+            createCFDOrder.message +
+            ', reason = ' +
+            createCFDOrder.reason,
         );
-        return (
-          'Tradebot ' +
+        return 'Tradebot ' + tradebot.id + ' failed to create position';
+      }
+      tradebot.holdingStatus = action;
+      tradebot.holdingInstId = instId;
+      tradebot.positionId = createCFDOrder.data.orderSnapshot.id;
+      tradebot.openPrice = quotation.data.price;
+      tradebot.updated_at = new Date();
+      tradebot.currentAsset = await this.userService.getMyAsset(tradebot.dewt);
+      this.logger.log(
+        'Tradebot ' +
           tradebot.id +
           ' created a ' +
           tradebot.holdingStatus +
           ' position in ' +
-          instId
-        );
-      }
-      if (tradebot.holdingStatus !== 'WAIT') {
-        this.logger.log('Tradebot ' + tradebot.id + ' is holding position');
-        return 'Tradebot ' + tradebot.id + ' is holding position';
-      }
-      this.logger.log('Tradebot ' + tradebot.id + ' is waiting for chance');
-      return 'Tradebot ' + tradebot.id + ' is waiting for chance';
+          instId,
+      );
+      return (
+        'Tradebot ' +
+        tradebot.id +
+        ' created a ' +
+        tradebot.holdingStatus +
+        ' position in ' +
+        instId
+      );
     } catch (error) {
       this.logger.error(
         tradebot.id + ' Error executing strategy: ' + error.message,
@@ -330,15 +349,17 @@ export class TradebotService {
         );
       }
       if (tradebot.holdingInstId !== 'BTC-USDT') {
-        await this.executeStrategy(tradebot, 'ETH-USDT');
+        const action = await this.runStrategy(tradebot, 'ETH-USDT');
+        await this.executeTrade(tradebot, 'ETH-USDT', action);
       }
       if (
         tradebot.holdingInstId !== 'ETH-USDT' &&
         tradebot.currentAsset.data.balance.available > 250
       ) {
-        await this.executeStrategy(tradebot, 'BTC-USDT');
+        const action = await this.runStrategy(tradebot, 'BTC-USDT');
+        await this.executeTrade(tradebot, 'BTC-USDT', action);
       }
-    }, 1000 * 15);
+    }, 1000 * 30);
     this.logger.log('Tradebot ' + tradebot.id + ' start running');
     return 'Tradebot ' + tradebot.id + ' start running';
   }
@@ -377,5 +398,305 @@ export class TradebotService {
     }
     this.logger.log('Tradebot ' + tradebot.id + ' is updated');
     return true;
+  }
+  async aiTrade(tradebot: Tradebot, instId: string = 'ETH-USDT') {
+    if (tradebot.isRunning) {
+      this.logger.log('Tradebot ' + tradebot.id + ' is already running');
+      return 'Tradebot ' + tradebot.id + ' is already running';
+    }
+    tradebot.isRunning = true;
+    const replayBufferSize = 100;
+    // const NUM_ACTIONS = 4;
+    const batchSize = 48;
+    const gamma = 0.99;
+    const learningRate = 1e-3;
+    let syncCount = 0;
+    const onlineNetwork = await tf.loadLayersModel(
+      'file://src/strategies/strategy/rl-dqn/models/dqn/model.json',
+    );
+    const targetNetwork = await tf.loadLayersModel(
+      'file://src/strategies/strategy/rl-dqn/models/dqn/model.json',
+    );
+    // Freeze taget network: it's weights are updated only through copying from
+    // the online network.
+    targetNetwork.trainable = false;
+    const replayMemory = new ReplayMemory(replayBufferSize);
+    for (let i = 0; i < replayBufferSize; ++i) {
+      await this.aiStep(tradebot, instId, onlineNetwork, replayMemory);
+      this.logger.log('Tradebot ' + tradebot.id + ' replayBuffer ' + i);
+    }
+    this.logger.log('Tradebot ' + tradebot.id + ' finish replayBuffer');
+    const optimizer = tf.train.adam(learningRate);
+    tradebot.timer = setInterval(async () => {
+      this.logger.log('Tradebot ' + tradebot.id + ' is running');
+      const now = new Date();
+      if (now.getHours() === 11 && now.getMinutes() === 30) {
+        const receiveDeposit = await this.receiveDeposit(tradebot);
+        this.logger.log(
+          'Tradebot ' +
+            tradebot.id +
+            ' received deposit is ' +
+            receiveDeposit +
+            ' at ' +
+            now +
+            ' and currentAsset = ' +
+            tradebot.currentAsset.data.balance.available,
+        );
+      }
+      const { action, reward } = await this.aiStep(
+        tradebot,
+        instId,
+        onlineNetwork,
+        replayMemory,
+      );
+      this.logger.log(
+        'Tradebot ' +
+          tradebot.id +
+          ' took action ' +
+          action +
+          ' and received reward ' +
+          reward,
+      );
+      this.trainAiOnReplayBatch(
+        batchSize,
+        gamma,
+        optimizer,
+        replayMemory,
+        onlineNetwork,
+        targetNetwork,
+      );
+      // const { action, cumulativeReward, done } = agent.playStep();
+      syncCount++;
+      if (syncCount === 200) {
+        syncCount = 0;
+        copyWeights(targetNetwork, onlineNetwork);
+        this.logger.log(
+          "Sync'ed weights from online network to target network",
+        );
+        await onlineNetwork.save(
+          'file://src/strategies/strategy/rl-dqn/models/dqn',
+        );
+        this.logger.log(
+          `Saved DQN to 'file://src/strategies/strategy/rl-dqn/models/dqn'`,
+        );
+      }
+    }, 1000 * 30);
+    this.logger.log('Tradebot ' + tradebot.id + ' start running');
+    return 'Tradebot ' + tradebot.id + ' start running AI version';
+  }
+  async aiStep(
+    tradebot: Tradebot,
+    instId: string,
+    onlineNetwork,
+    replayMemory,
+  ) {
+    const ALL_ACTIONS: number[] = [0, 1, 2, 3];
+    // The epsilon-greedy algorithm.
+    let action;
+    const quotation = await this.priceTickerService.getCFDQuotation(
+      action,
+      instId,
+    );
+    const priceArray = await this.priceTickerService.getCandlesticks(instId);
+    let holdingStatusNum: number;
+    const state = [
+      priceArray,
+      quotation.data.spotPrice,
+      tradebot.openPrice,
+      quotation.data.spreadFee,
+      holdingStatusNum,
+    ].flat();
+    if (Math.random() < 0.1) {
+      // Pick an action at random.
+      const actionNum = Math.random();
+      if (actionNum < 0.25) {
+        action = 0;
+      }
+      if (actionNum >= 0.25 && actionNum < 0.5) {
+        action = 1;
+      }
+      if (actionNum >= 0.5 && actionNum < 0.75) {
+        action = 2;
+      }
+      if (actionNum >= 0.75) {
+        action = 3;
+      }
+    } else {
+      //   Greedily pick an action based on online DQN output.
+      tf.tidy(() => {
+        // const flatState = state.flat(); // Convert state array to a flat array
+        const prediction = onlineNetwork.predict(
+          tf.tensor1d(state).reshape([1, -1]),
+        ) as tf.Tensor<tf.Rank>;
+        const actionIndex = prediction.argMax(-1).dataSync()[0];
+        action = ALL_ACTIONS[actionIndex];
+      });
+    }
+    const nextState = await this.envStep(
+      tradebot,
+      priceArray,
+      quotation,
+      action,
+    );
+    const actionStr = this.convertHoldingStatusBack(action);
+    await this.executeTrade(tradebot, instId, actionStr);
+    replayMemory.append([
+      state,
+      action,
+      nextState.reward,
+      Object.values(nextState).slice(0, 5).flat(),
+    ]);
+    const output = {
+      action,
+      reward: nextState.reward,
+    };
+    return output;
+  }
+  async trainAiOnReplayBatch(
+    batchSize,
+    gamma,
+    optimizer,
+    replayMemory,
+    onlineNetwork,
+    targetNetwork,
+  ) {
+    // Get a batch of examples from the replay buffer.
+    const batch = replayMemory.sample(batchSize);
+    const lossFunction = () =>
+      tf.tidy(() => {
+        // console.log(batch.map((example) => example[0]));
+        const stateTensor = tf.tensor2d(batch.map((example) => example[0]));
+        const actionTensor = tf.tensor1d(
+          batch.map((example) => example[1]),
+          'int32',
+        );
+        let qs = onlineNetwork.apply(stateTensor, {
+          training: true,
+        });
+        qs = (qs as tf.Tensor<tf.Rank>).mul(tf.oneHot(actionTensor, 4)).sum(-1);
+        const rewardTensor = tf.tensor1d(batch.map((example) => example[2]));
+        const nextStateTensor = tf.tensor2d(batch.map((example) => example[3]));
+        const nextMaxQTensor = (
+          targetNetwork.predict(nextStateTensor) as tf.Tensor<tf.Rank>
+        ).max(-1);
+        const doneMask = tf
+          .scalar(1)
+          .sub(tf.tensor1d(batch.map((example) => example[4])));
+        const targetQs = rewardTensor.add(
+          nextMaxQTensor.mul(doneMask).mul(gamma),
+        );
+        return tf.losses.meanSquaredError(targetQs, qs);
+      });
+
+    // Calculate the gradients of the loss function with repsect to the weights
+    // of the online DQN.
+    const grads = tf.variableGrads(() => lossFunction() as tf.Scalar);
+    // Use the gradients to update the online DQN's weights.
+    optimizer.applyGradients(grads.grads);
+    tf.dispose(grads);
+    // TODO(cais): Return the loss value here?
+  }
+  async envStep(
+    tradebot: Tradebot,
+    priceArray,
+    quotation: QuotationDto,
+    action: any,
+  ) {
+    let profit = 0;
+    let reward = 0;
+    if (action === 3) {
+      if (tradebot.holdingStatus === 'WAIT') {
+        reward = -35;
+      }
+      if (tradebot.holdingStatus === 'BUY') {
+        profit =
+          quotation.data.spotPrice -
+          quotation.data.spreadFee -
+          tradebot.openPrice;
+        reward = profit;
+        reward += 20;
+      }
+      if (tradebot.holdingStatus === 'SELL') {
+        profit =
+          tradebot.openPrice -
+          (quotation.data.spotPrice + quotation.data.spreadFee);
+        reward = profit;
+        reward += 10;
+      }
+    }
+    if (action === 1) {
+      if (tradebot.holdingStatus === 'WAIT') {
+        reward = 25;
+      } else {
+        reward = -35;
+      }
+    }
+    if (action === 2) {
+      if (tradebot.holdingStatus === 'WAIT') {
+        reward = 25;
+      } else {
+        reward = -35;
+      }
+    }
+    if (profit > 50) {
+      reward += 20;
+    }
+    if (profit < -50) {
+      reward -= 15;
+    }
+    quotation = await this.priceTickerService.getCFDQuotation(
+      'BUY',
+      quotation.data.instId,
+    );
+    return {
+      previousPrice: priceArray,
+      currentPrice: quotation.data.spotPrice,
+      openPrice: tradebot.openPrice,
+      spreadFee: quotation.data.spreadFee,
+      holdingStatus: this.convertHoldingStatus(tradebot.holdingStatus),
+      reward: reward,
+    };
+  }
+  convertHoldingStatus(holdingStatus: string) {
+    let holdingStatusNum;
+    switch (holdingStatus) {
+      case 'WAIT':
+        holdingStatusNum = 0;
+        break;
+      case 'BUY':
+        holdingStatusNum = 1;
+        break;
+      case 'SELL':
+        holdingStatusNum = 2;
+        break;
+      case 'CLOSE':
+        holdingStatusNum = 3;
+        break;
+      default:
+        holdingStatusNum = 0;
+        break;
+    }
+    return holdingStatusNum;
+  }
+  convertHoldingStatusBack(holdingStatusNum: number) {
+    let holdingStatus;
+    switch (holdingStatusNum) {
+      case 0:
+        holdingStatus = 'WAIT';
+        break;
+      case 1:
+        holdingStatus = 'BUY';
+        break;
+      case 2:
+        holdingStatus = 'SELL';
+        break;
+      case 3:
+        holdingStatus = 'CLOSE';
+        break;
+      default:
+        holdingStatus = 'WAIT';
+        break;
+    }
+    return holdingStatus;
   }
 }
