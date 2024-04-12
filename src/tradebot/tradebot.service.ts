@@ -525,8 +525,9 @@ export class TradebotService {
       //   Greedily pick an action based on online DQN output.
       tf.tidy(() => {
         // const flatState = state.flat(); // Convert state array to a flat array
+        const stateTensor = tf.tensor1d(state).reshape([1, -1]);
         const prediction = onlineNetwork.predict(
-          tf.tensor1d(state).reshape([1, -1]),
+          stateTensor,
         ) as tf.Tensor<tf.Rank>;
         const actionIndex = prediction.argMax(-1).dataSync()[0];
         action = ALL_ACTIONS[actionIndex];
@@ -572,7 +573,8 @@ export class TradebotService {
         let qs = onlineNetwork.apply(stateTensor, {
           training: true,
         });
-        qs = (qs as tf.Tensor<tf.Rank>).mul(tf.oneHot(actionTensor, 4)).sum(-1);
+        const oneHotActionTensor = tf.oneHot(actionTensor, 4);
+        qs = (qs as tf.Tensor<tf.Rank>).mul(oneHotActionTensor).sum(-1);
         const batchReward = batch.map((example) => example[2]);
         const rewardTensor = tf.tensor1d(batchReward);
         const batchNextState = batch.map((example) => example[3]);
@@ -580,9 +582,9 @@ export class TradebotService {
         const nextMaxQTensor = (
           targetNetwork.predict(nextStateTensor) as tf.Tensor<tf.Rank>
         ).max(-1);
-        const doneMask = tf
-          .scalar(1)
-          .sub(tf.tensor1d(batch.map((example) => example[4])));
+        const exampleDone = batch.map((example) => example[4]);
+        const doneTensor = tf.tensor1d(exampleDone);
+        const doneMask = tf.scalar(1).sub(doneTensor);
         const targetQs = rewardTensor.add(
           nextMaxQTensor.mul(doneMask).mul(gamma),
         );
