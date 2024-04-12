@@ -565,17 +565,18 @@ export class TradebotService {
     const lossFunction = () =>
       tf.tidy(() => {
         // console.log(batch.map((example) => example[0]));
-        const stateTensor = tf.tensor2d(batch.map((example) => example[0]));
-        const actionTensor = tf.tensor1d(
-          batch.map((example) => example[1]),
-          'int32',
-        );
+        const batchState = batch.map((example) => example[0]);
+        const stateTensor = tf.tensor2d(batchState);
+        const batchAction = batch.map((example) => example[1]);
+        const actionTensor = tf.tensor1d(batchAction, 'int32');
         let qs = onlineNetwork.apply(stateTensor, {
           training: true,
         });
         qs = (qs as tf.Tensor<tf.Rank>).mul(tf.oneHot(actionTensor, 4)).sum(-1);
-        const rewardTensor = tf.tensor1d(batch.map((example) => example[2]));
-        const nextStateTensor = tf.tensor2d(batch.map((example) => example[3]));
+        const batchReward = batch.map((example) => example[2]);
+        const rewardTensor = tf.tensor1d(batchReward);
+        const batchNextState = batch.map((example) => example[3]);
+        const nextStateTensor = tf.tensor2d(batchNextState);
         const nextMaxQTensor = (
           targetNetwork.predict(nextStateTensor) as tf.Tensor<tf.Rank>
         ).max(-1);
@@ -590,7 +591,8 @@ export class TradebotService {
 
     // Calculate the gradients of the loss function with repsect to the weights
     // of the online DQN.
-    const grads = tf.variableGrads(() => lossFunction() as tf.Scalar);
+    const mse = () => lossFunction() as tf.Scalar;
+    const grads = tf.variableGrads(mse);
     // Use the gradients to update the online DQN's weights.
     optimizer.applyGradients(grads.grads);
     tf.dispose(grads);
@@ -648,12 +650,13 @@ export class TradebotService {
       'BUY',
       quotation.data.instId,
     );
+    const holdingStatusNum = this.convertHoldingStatus(tradebot.holdingStatus);
     return {
       previousPrice: priceArray,
       currentPrice: quotation.data.spotPrice,
       openPrice: tradebot.openPrice,
       spreadFee: quotation.data.spreadFee,
-      holdingStatus: this.convertHoldingStatus(tradebot.holdingStatus),
+      holdingStatus: holdingStatusNum,
       reward: reward,
     };
   }
