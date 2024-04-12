@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PriceTickerController } from './price_ticker.controller';
-import { PriceTickerService } from './price_ticker.service';
+import PriceTickerService from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
 
 describe('PriceTickerController', () => {
