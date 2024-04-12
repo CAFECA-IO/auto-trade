@@ -52,7 +52,7 @@ export class Environment {
     this.spreadFee = 0.005 * this.currentPrice;
     if (action === 3) {
       if (this.holdingStatus === 0) {
-        reward = -35;
+        reward = -40;
       }
       if (this.holdingStatus === 1) {
         profit = this.currentPrice - this.spreadFee - this.openPrice;

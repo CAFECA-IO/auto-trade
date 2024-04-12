@@ -62,4 +62,29 @@ export class PriceTickerService {
     const priceArray = data.data.candlesticks.map((item) => item.y.close);
     return priceArray;
   }
+
+  async getCandlesticksV2(
+    instId: string = 'ETH-USDT',
+    timeSpan: string = '5m',
+    begin: number = 0,
+    end: number = 0,
+    limit: number = 300,
+  ): Promise<any> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<any>(
+        'https://api.tidebit-defi.com/api/v2' +
+          '/candlesticks/' +
+          instId +
+          '?timeSpan=' +
+          timeSpan +
+          '&begin=' +
+          begin +
+          '&end=' +
+          end +
+          '&limit=' +
+          limit,
+      ),
+    );
+    return data;
+  }
 }
