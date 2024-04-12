@@ -42,10 +42,9 @@ describe('RL test', () => {
   });
   it('DQN', async () => {
     // Read the file
-    const etharr = JSON.parse(
-      fs.readFileSync('src/strategies/etharr.txt', 'utf8'),
-    );
-    const env = new Environment(etharr);
+    const ethArrfile = fs.readFileSync('src/strategies/etharr.txt', 'utf8');
+    const ethArr = JSON.parse(ethArrfile);
+    const env = new Environment(ethArr);
     const tradeAgent = new TradeAgent(env);
     await train(tradeAgent);
   });
