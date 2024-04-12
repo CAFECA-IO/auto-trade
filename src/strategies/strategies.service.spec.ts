@@ -121,9 +121,8 @@ describe('StrategiesService', () => {
 
   it('should backtest use api', async () => {
     console.log = () => {};
-    const etharr = JSON.parse(
-      fs.readFileSync('src/strategies/etharr.txt', 'utf8'),
-    );
+    const ethArrFile = fs.readFileSync('src/strategies/etharr.txt', 'utf8');
+    const etharr = JSON.parse(ethArrFile);
     const { tradeArray } = await strategiesService.backTesting(
       'autoArima',
       'autoArima',

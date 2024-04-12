@@ -46,7 +46,7 @@ export class PriceTickerService {
   async getCandlesticks(
     instId: string = 'ETH-USDT',
     timeSpan: string = '5m',
-    limit: number = 300,
+    limit: number = 100,
   ): Promise<number[]> {
     const { data } = await firstValueFrom(
       this.httpService.get<CandlestickDto>(

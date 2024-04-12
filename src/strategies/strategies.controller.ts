@@ -7,6 +7,7 @@ export class StrategiesController {
 
   @Get()
   async trainDqn() {
-    this.strategiesService.trainDqn();
+    await this.strategiesService.trainDqn();
+    return 'Training DQN finished';
   }
 }

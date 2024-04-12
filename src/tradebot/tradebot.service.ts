@@ -539,14 +539,10 @@ export class TradebotService {
       quotation,
       action,
     );
+    const nextStateFlat = Object.values(nextState).slice(0, 5).flat();
     const actionStr = this.convertHoldingStatusBack(action);
     await this.executeTrade(tradebot, instId, actionStr);
-    replayMemory.append([
-      state,
-      action,
-      nextState.reward,
-      Object.values(nextState).slice(0, 5).flat(),
-    ]);
+    replayMemory.append([state, action, nextState.reward, nextStateFlat]);
     const output = {
       action,
       reward: nextState.reward,
