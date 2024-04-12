@@ -7,7 +7,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { DOMAIN_BACKEND } from '../common/constants/config';
 
 @Injectable()
-export default class PriceTickerService {
+export class PriceTickerService {
   constructor(private readonly httpService: HttpService) {}
   ETHBuyQuotation: QuotationDto;
   ETHSellQuotation: QuotationDto;

@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import PriceTickerService from './price_ticker.service';
+import { PriceTickerService } from './price_ticker.service';
 
 @Controller('price-ticker')
 export class PriceTickerController {

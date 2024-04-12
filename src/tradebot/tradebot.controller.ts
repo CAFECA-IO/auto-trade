@@ -92,7 +92,7 @@ export class TradebotController {
         const depositCommand = this.tradebotService.receiveDeposit(tradebot);
         return depositCommand;
       }
-      return data.command + 'is invalid command';
+      return data.command + ' is invalid command';
     } catch (error) {
       return error.message;
     }

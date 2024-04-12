@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import PriceTickerService from './price_ticker.service';
+import { PriceTickerService } from './price_ticker.service'; // Fixed import statement
 import { PriceTickerController } from './price_ticker.controller';
 import { HttpModule } from '@nestjs/axios';
 
