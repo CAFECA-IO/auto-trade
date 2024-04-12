@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TradebotService } from './tradebot.service';
-import PriceTickerService from '../price_ticker/price_ticker.service';
+import { PriceTickerService } from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { UserService } from '../user/user.service';

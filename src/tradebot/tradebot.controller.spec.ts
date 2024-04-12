@@ -8,7 +8,7 @@ import { DewtModule } from '../dewt/dewt.module';
 import { TransactionModule } from '../transaction/transaction.module';
 import { UserModule } from '../user/user.module';
 import { DewtService } from '../dewt/dewt.service';
-import PriceTickerService from '../price_ticker/price_ticker.service';
+import { PriceTickerService } from '../price_ticker/price_ticker.service';
 import { StrategiesService } from '../strategies/strategies.service';
 import { TransactionService } from '../transaction/transaction.service';
 import { UserService } from '../user/user.service';
