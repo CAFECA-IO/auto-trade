@@ -176,7 +176,7 @@ Parameters
 
 ```typescript
 
-PUT /tradebot?id=tradebotId
+GET /tradebot?id=tradebotId
 
 ```
 
