@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs-node';
 export function createDeepQNetwork(numActions) {
   const model = tf.sequential();
   model.add(
-    tf.layers.dense({ units: 32, activation: 'relu', inputShape: [52] }),
+    tf.layers.dense({ units: 32, activation: 'relu', inputShape: [104] }),
   );
   model.add(tf.layers.dense({ units: 64, activation: 'relu' }));
   model.add(tf.layers.dense({ units: 128, activation: 'relu' }));

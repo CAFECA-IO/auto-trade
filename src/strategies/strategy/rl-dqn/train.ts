@@ -1,5 +1,6 @@
 import * as tf from '@tensorflow/tfjs-node';
 import { TradeAgent } from './tradeAgent';
+import { copyWeights } from './dqn';
 
 class MovingAverager {
   buffer: any[];
@@ -22,7 +23,7 @@ class MovingAverager {
 
 export async function train(
   agent: TradeAgent,
-  batchSize = 32,
+  batchSize = 48,
   gamma = 0.99,
   learningRate = 1e-3,
   savePath = '/models',
@@ -36,9 +37,10 @@ export async function train(
 
   const optimizer = tf.train.adam(learningRate);
   let averageReward100Best = -Infinity;
+  let syncCount = 0;
   while (true) {
     agent.trainOnReplayBatch(batchSize, gamma, optimizer);
-    const { action, cumulativeReward, done } = agent.playStep();
+    const { cumulativeReward, done } = agent.playStep();
     if (done) {
       rewardAverager100.append(cumulativeReward);
       const averageReward100 = rewardAverager100.average();
@@ -50,7 +52,12 @@ export async function train(
           );
         }
       }
+      syncCount++;
       return agent.cumulativeReward_;
+    }
+    if (syncCount === 300) {
+      syncCount = 0;
+      copyWeights(agent.targetNetwork, agent.onlineNetwork);
     }
   }
 }

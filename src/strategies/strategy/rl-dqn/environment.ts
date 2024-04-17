@@ -10,7 +10,8 @@ export class Environment {
   openPrice: number;
   currentPrice: number;
   profitLog: number[];
-  actionLog: any[] = [];
+  actionLog: any[];
+  rewardLog: any[];
 
   constructor(priceArray) {
     this.current_step = 48;
@@ -23,6 +24,7 @@ export class Environment {
     this.holdingStatus = 0;
     this.profitLog = [];
     this.actionLog = [];
+    this.rewardLog = [];
   }
 
   reset() {
@@ -47,7 +49,6 @@ export class Environment {
     let profit = 0;
     let reward = 0;
     this.currentPrice = this.priceArray[this.current_step];
-    // console.log("🚀 ~ Environment ~ step ~ currentPrice:", this.currentPrice)
     this.spreadFee = 0.005 * this.currentPrice;
     if (action === 3) {
       if (this.holdingStatus === 0) {
@@ -71,14 +72,14 @@ export class Environment {
         const currentPriceStr = JSON.stringify(this.currentPrice);
         this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 1;
-        reward = 20;
+        reward = 25;
         if (this.openPrice < this.priceArray[this.current_step + 10]) {
-          reward += 15;
+          reward += 24;
         } else {
-          reward += -15;
+          reward += -14;
         }
       } else {
-        reward = -20;
+        reward = -35;
       }
     }
     if (action === 2) {
@@ -86,14 +87,14 @@ export class Environment {
         const currentPriceStr = JSON.stringify(this.currentPrice);
         this.openPrice = JSON.parse(currentPriceStr);
         this.holdingStatus = 2;
-        reward = 20;
+        reward = 25;
         if (this.openPrice > this.priceArray[this.current_step + 10]) {
-          reward += 15;
+          reward += 20;
         } else {
-          reward += -15;
+          reward += -20;
         }
       } else {
-        reward = -20;
+        reward = -35;
       }
     }
     this.current_step += 1;
@@ -105,13 +106,8 @@ export class Environment {
         reward = -30;
       }
     }
-    this.actionLog.push(action);
-    this.profitLog.push(profit);
     return {
-      previousPrice: this.priceArray.slice(
-        this.current_step - 48,
-        this.current_step,
-      ),
+      previousPrice: this.priceArray.slice(-100),
       currentPrice: this.currentPrice,
       openPrice: this.openPrice,
       spreadFee: this.spreadFee,
@@ -121,7 +117,7 @@ export class Environment {
   }
   getState() {
     return [
-      this.priceArray.slice(this.current_step - 48, this.current_step),
+      this.priceArray.slice(-100),
       this.currentPrice,
       this.openPrice,
       this.spreadFee,

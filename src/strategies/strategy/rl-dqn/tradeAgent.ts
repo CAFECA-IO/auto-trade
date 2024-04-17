@@ -55,7 +55,7 @@ export class TradeAgent {
    *   - `learningRate` {number} The learning rate to use during training.
    */
   constructor(environment) {
-    this.NUM_ACTIONS = 300;
+    this.NUM_ACTIONS = 4;
     this.env = environment;
     this.epsilonInit = 1;
     this.epsilonFinal = 0.1;

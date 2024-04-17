@@ -127,11 +127,11 @@ describe('TradebotService', () => {
       const tradebot = new Tradebot();
       const instId = 'ETH-USDT';
       jest
-        .spyOn(service, 'executeStrategy')
+        .spyOn(service, 'executeTrade')
         .mockResolvedValue(
           'Tradebot ' + tradebot.id + ' sucessfully close position',
         );
-      const result = await service.executeStrategy(tradebot, instId);
+      const result = await service.executeTrade(tradebot, instId, 'CLOSE');
       // Assert
       expect(result).toBe(
         'Tradebot ' + tradebot.id + ' sucessfully close position',
@@ -144,16 +144,24 @@ describe('TradebotService', () => {
       const instId = 'ETH-USDT';
       // Act
       jest
-        .spyOn(service, 'executeStrategy')
+        .spyOn(service, 'executeTrade')
         .mockResolvedValue(
           'Tradebot ' + tradebot.id + ' failed to close position',
         );
-      const result = await service.executeStrategy(tradebot, instId);
+      const result = await service.executeTrade(tradebot, instId, 'CLOSE');
 
       // Assert
       expect(result).toBe(
         'Tradebot ' + tradebot.id + ' failed to close position',
       );
     });
+  });
+  it('should convert holding status to number', () => {
+    // Arrange
+    const holdingStatus = 'WAIT';
+    // Act
+    const result = service.convertHoldingStatus(holdingStatus);
+    // Assert
+    expect(result).toBe(0);
   });
 });
