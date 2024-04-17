@@ -27,6 +27,7 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^4.0.1",
+    "@tensorflow/tfjs-node": "^4.17.0",
     "arima": "^0.2.5",
     "axios": "^1.5.1",
     "bignumber.js": "^9.1.2",

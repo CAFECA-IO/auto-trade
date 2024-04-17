@@ -92,7 +92,11 @@ export class TradebotController {
         const depositCommand = this.tradebotService.receiveDeposit(tradebot);
         return depositCommand;
       }
-      return data.command + ' is invalid command';
+      if (data.command === 'aiTrade') {
+        const runAiCommand = this.tradebotService.aiTrade(tradebot);
+        return runAiCommand;
+      }
+      return data.command + 'is invalid command';
     } catch (error) {
       return error.message;
     }
