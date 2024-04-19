@@ -3,13 +3,20 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { QuotationDto } from './dto/quotation.dto';
 import { CandlestickDto } from './dto/candlestick.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { DOMAIN_BACKEND } from '../common/constants/config';
 
 @Injectable()
 export class PriceTickerService {
   constructor(private readonly httpService: HttpService) {}
+  ETHBuyQuotation: QuotationDto;
+  ETHSellQuotation: QuotationDto;
+  BTCBuyQuotation: QuotationDto;
+  BTCSellQuotation: QuotationDto;
+  ETHPriceArray: number[];
+  BTCPriceArray: number[];
 
-  async getCFDQuotation(
+  async fetchCFDQuotation(
     typeOfPosition: string = 'BUY',
     instId: string = 'ETH-USDT',
   ): Promise<QuotationDto> {
@@ -26,7 +33,7 @@ export class PriceTickerService {
     return data;
   }
 
-  async getTickers(instId: string = 'ETH-USDT'): Promise<number[]> {
+  async fetchTickers(instId: string = 'ETH-USDT'): Promise<number[]> {
     const { data } = await firstValueFrom(
       this.httpService.get<any>(
         DOMAIN_BACKEND + '/market/tickers?limit=50&timespan=5m',
@@ -43,7 +50,7 @@ export class PriceTickerService {
     return data;
   }
 
-  async getCandlesticks(
+  async fetchCandlesticks(
     instId: string = 'ETH-USDT',
     timeSpan: string = '5m',
     limit: number = 100,
@@ -63,7 +70,7 @@ export class PriceTickerService {
     return priceArray;
   }
 
-  async getCandlesticksV2(
+  async fetchCandlesticksV2(
     instId: string = 'ETH-USDT',
     timeSpan: string = '5m',
     begin: number = 0,
@@ -86,5 +93,60 @@ export class PriceTickerService {
       ),
     );
     return data;
+  }
+  async getCFDQuotation(
+    typeOfPosition: string = 'BUY',
+    instId: string = 'ETH-USDT',
+  ) {
+    if (instId === 'ETH-USDT') {
+      if (typeOfPosition === 'BUY') {
+        return this.ETHBuyQuotation;
+      }
+      if (typeOfPosition === 'SELL') {
+        return this.ETHSellQuotation;
+      }
+    }
+    if (instId === 'BTC-USDT') {
+      if (typeOfPosition === 'BUY') {
+        return this.BTCBuyQuotation;
+      }
+      if (typeOfPosition === 'SELL') {
+        return this.BTCSellQuotation;
+      }
+    }
+  }
+
+  async getCandlesticks(instId: string = 'ETH-USDT') {
+    if (instId === 'ETH-USDT') {
+      return this.ETHPriceArray;
+    }
+    if (instId === 'BTC-USDT') {
+      return this.BTCPriceArray;
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async ETHBuyQuotationCron() {
+    this.ETHBuyQuotation = await this.fetchCFDQuotation('BUY');
+  }
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async ETHSellQuotationCron() {
+    this.ETHSellQuotation = await this.fetchCFDQuotation('SELL');
+  }
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async BTCBuyQuotationCron() {
+    this.BTCBuyQuotation = await this.fetchCFDQuotation('BUY', 'BTC-USDT');
+  }
+  @Cron(CronExpression.EVERY_10_SECONDS)
+  async BTCSellQuotationCron() {
+    this.BTCSellQuotation = await this.fetchCFDQuotation('SELL', 'BTC-USDT');
+  }
+  @Cron(CronExpression.EVERY_MINUTE)
+  async ETHPriceArrayCron() {
+    this.ETHPriceArray = await this.fetchCandlesticks();
+  }
+  @Cron(CronExpression.EVERY_MINUTE)
+  async BTCPriceArrayCron() {
+    this.BTCPriceArray = await this.fetchCandlesticks('BTC-USDT');
   }
 }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PriceTickerService } from './price_ticker.service';
+import PriceTickerService from './price_ticker.service';
 import { HttpModule } from '@nestjs/axios';
 import { QuotationDto } from './dto/quotation.dto';
 import * as fs from 'fs';
