@@ -1,4 +1,7 @@
-## auto-trade
+> [!IMPORTANT]
+> 🚀 auto-trade support **AI** 🤖 trading 💹 now !! You could use `aiTrade` command to use AI tradebot. The AI trading strategy is based on the *reinforcement learning* 📑 model. The model will learn from the historical data and make the best decision for you. The AI trading strategy is a premium feature, but you dont need to pay for it!
+
+# auto-trade
 
 auto is an open source project that aims to provide a simple and easy to use trading bot for the TideBit DeFi . The bot is written in TypeScript and uses the NestJS framework.
 
@@ -231,7 +234,7 @@ POST /tradebot/tradebotId
 
 | name      | type    | required | default |description |
 | --------  | ------- | -------- | ------- | ----- |
-| command   | string  | true    | null    | "run" or "stop" or "deposit" |
+| command   | string  | true    | null    | "run" or "stop" or "deposit or aiTrade" |
 
 ### Request Example
 
