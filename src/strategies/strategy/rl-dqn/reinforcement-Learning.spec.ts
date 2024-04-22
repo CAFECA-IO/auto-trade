@@ -30,7 +30,12 @@ describe('RL test', () => {
       [1, 0],
       [1, 1],
     ]);
-    const ys = tf.tensor2d([[0], [1], [1], [0]]);
+    const ys = tf.tensor2d([
+      [0, 1],
+      [1, 0],
+      [1, 0],
+      [0, 1],
+    ]); // Modify the target tensor shape
 
     // Train the model
     model.fit(xs, ys, { epochs: 100 }).then(() => {
