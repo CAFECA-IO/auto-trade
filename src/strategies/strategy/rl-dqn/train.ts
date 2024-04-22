@@ -46,11 +46,11 @@ export async function train(
       const averageReward100 = rewardAverager100.average();
       if (averageReward100 > averageReward100Best) {
         averageReward100Best = averageReward100;
-        if (savePath != null) {
-          await agent.onlineNetwork.save(
-            'file://src/strategies/strategy/rl-dqn/models/dqn',
-          );
-        }
+        // if (savePath != null) {
+        //   await agent.onlineNetwork.save(
+        //     'file://src/strategies/strategy/rl-dqn/models/dqn',
+        //   );
+        // }
       }
       syncCount++;
       return agent.cumulativeReward_;

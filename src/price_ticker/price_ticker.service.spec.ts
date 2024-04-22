@@ -26,8 +26,8 @@ describe('PriceTickerService', () => {
 
   it('should return an array of tickers', async () => {
     const array = [1, 2, 3, 4, 5];
-    jest.spyOn(service, 'getTickers').mockImplementation(async () => array);
-    expect(await service.getTickers()).toStrictEqual([1, 2, 3, 4, 5]);
+    jest.spyOn(service, 'fetchTickers').mockImplementation(async () => array);
+    expect(await service.fetchTickers()).toStrictEqual([1, 2, 3, 4, 5]);
   });
 
   it('should return an array of candlestick', async () => {
@@ -43,7 +43,7 @@ describe('PriceTickerService', () => {
     for (let i = 0; i < 11; i++) {
       const begin = Date.now() - 90000000 * (i + 1);
       const end = Date.now() - 90000000 * i;
-      const r = await service.getCandlesticksV2('ETH-USDT', '5m', begin, end);
+      const r = await service.fetchCandlesticksV2('ETH-USDT', '5m', begin, end);
       const tempArr = r.data.candlesticks.candlesticks.map(
         (item) => item.y.close,
       );
