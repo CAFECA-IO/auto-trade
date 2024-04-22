@@ -38,18 +38,19 @@ describe('PriceTickerService', () => {
     expect(await service.getCandlesticks()).toStrictEqual([1, 2, 3, 4, 5]);
   });
 
-  it('should store an array of candlestick', async () => {
-    let etharr = [];
-    for (let i = 0; i < 11; i++) {
-      const begin = Date.now() - 90000000 * (i + 1);
-      const end = Date.now() - 90000000 * i;
-      const r = await service.fetchCandlesticksV2('ETH-USDT', '5m', begin, end);
-      const tempArr = r.data.candlesticks.candlesticks.map(
-        (item) => item.y.close,
-      );
-      etharr = tempArr.concat(etharr);
-    }
-    const etharrJson = JSON.stringify(etharr);
-    fs.writeFileSync('src/strategies/etharr.txt', etharrJson);
-  });
+  // Info: (20240422 - Jacky) Write the data to a file
+  // it('should store an array of candlestick', async () => {
+  //   let etharr = [];
+  //   for (let i = 0; i < 3; i++) {
+  //     const begin = Date.now() - 90000000 * (i + 1);
+  //     const end = Date.now() - 90000000 * i;
+  //     const r = await service.fetchCandlesticksV2('ETH-USDT', '5m', begin, end);
+  //     const tempArr = await r.data.candlesticks.candlesticks.map(
+  //     (item) => item.y.close,
+  //     );
+  //     etharr = await tempArr.concat(etharr);
+  //   }
+  // const etharrJson = JSON.stringify(etharr);
+  // fs.writeFileSync('src/strategies/etharr.txt', etharrJson);
+  // });
 });
