@@ -1,35 +1,44 @@
 import * as ARIMA from 'arima';
+import { rsi } from 'technicalindicators';
 
 export function suggestion(data: {
   currentPrice: number;
   priceArray: number[];
   spreadFee: number;
   holdingStatus: string;
+  rsiValue: number; // add this as a new field
 }) {
   let suggestion = 'WAIT';
   const arima = new ARIMA('auto');
   arima.train(data.priceArray);
-  // const AbsspreadFee = Math.abs(data.spreadFee);
   const arimaPredict = arima.predict(15);
   const predict: number[] = arimaPredict[0];
-  // const predictProfit = AbsspreadFee * 2.8;
   const currentPrice = data.currentPrice;
-  if (predict[predict.length - 1] > currentPrice) {
+  const rsiInput = {
+    period: 14, // Set the desired value for the period property
+    values: data.priceArray, // Pass the data.priceArray as the values property
+  };
+  const rsiValue = rsi(rsiInput);
+  const rsiAverage = average(rsiValue, 3); // calculate a moving average of the RSI
+  if (predict[predict.length - 1] > currentPrice && rsiAverage < 70) {
+    // buy signal with low RSI
     suggestion = 'BUY';
-  }
-  if (predict[predict.length - 1] < currentPrice) {
+  } else if (predict[predict.length - 1] < currentPrice && rsiAverage > 30) {
+    // sell signal with high RSI
     suggestion = 'SELL';
   }
   if (suggestion === 'WAIT') {
     return suggestion;
   }
-  if (data.holdingStatus === 'WAIT') {
+  if (data.holdingStatus === 'WAIT' || data.holdingStatus === suggestion) {
     return suggestion;
+  } else {
+    return 'CLOSE'; // close the position when the suggestion changes
   }
-  if (suggestion !== data.holdingStatus) {
-    return 'CLOSE';
-  }
-  return 'WAIT';
+}
+
+function average(arr: number[], n: number): number {
+  return arr.reduce((a, b) => a + b, 0) / n;
 }
 
 export function takeProfit(data: {
