@@ -38,7 +38,7 @@ describe('PriceTickerService', () => {
     expect(await service.getCandlesticks()).toStrictEqual([1, 2, 3, 4, 5]);
   });
 
-  it('should return an array of candlestick', async () => {
+  it('should store an array of candlestick', async () => {
     let etharr = [];
     for (let i = 0; i < 11; i++) {
       const begin = Date.now() - 90000000 * (i + 1);
@@ -50,8 +50,6 @@ describe('PriceTickerService', () => {
       etharr = tempArr.concat(etharr);
     }
     const etharrJson = JSON.stringify(etharr);
-    // console.log(etharr);
-    // use fs to write the etharr to a file
     fs.writeFileSync('src/strategies/etharr.txt', etharrJson);
   });
 });
