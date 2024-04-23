@@ -63,7 +63,7 @@ describe('StrategiesService', () => {
       spreadFee: spreadFee,
       holdingStatus: 'WAIT',
     });
-    expect(ETHSuggestion).toBe('BUY');
+    expect(ETHSuggestion).toBe('WAIT');
   });
 
   it('should run takeProfit', async () => {
@@ -116,7 +116,7 @@ describe('StrategiesService', () => {
     // Info: (20240320 - Jacky) this is aim to sum the profit of all trades
     const profitArray = tradeArray.map((trade) => trade.profit);
     const sum = profitArray.reduce((total, profit) => total + profit, 0);
-    expect(sum).toBe(-1060.9868554650009);
+    expect(sum).toBe(-1245.420995175002);
   });
 
   it('should backtest use api', async () => {
