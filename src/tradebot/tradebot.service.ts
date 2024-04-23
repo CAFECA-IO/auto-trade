@@ -174,7 +174,9 @@ export class TradebotService {
         return 'CLOSE';
       }
       if (suggestion === 'BUY' || suggestion === 'SELL') {
-        return suggestion;
+        if (tradebot.holdingStatus === 'WAIT') {
+          return suggestion;
+        }
       }
       return 'WAIT';
     } catch (error) {
