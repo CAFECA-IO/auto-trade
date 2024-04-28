@@ -1,36 +1,135 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+> [!IMPORTANT]
+> 🚀 auto-trade support **AI** 🤖 trading 💹 now !! You could use `aiTrade` command to use AI tradebot. The AI trading strategy is based on the *reinforcement learning* 📑 model. The model will learn from the historical data and make the best decision for you. The AI trading strategy is a premium feature, but you dont need to pay for it!
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# auto-trade
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+auto is an open source project that aims to provide a simple and easy to use trading bot for the TideBit DeFi . The bot is written in TypeScript and uses the NestJS framework.
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+auto trade is a simple trading bot that uses the TideBit API to trade on the exchange. The bot is written in TypeScript and uses the NestJS framework. The bot is designed to be simple and easy to use, and is intended to be used by people who are new to trading and want to apply different trading strategies.
 
 ## Installation
 
+1. Clone this repository:
+
 ```bash
-$ npm install
+git clone https://github.com/CAFECA-IO/auto-trade/tree/develop
 ```
+
+```bash
+cd auto-trade
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Copy the example `.env` file in your root directory and fill in the required information:
+
+```json
+SUGGESTION = "autoArima"
+STOP_LOSS = "autoArima"
+TAKE_PROFIT = "autoArima"
+PRIVATE_KEY = "YOUR_PRIVATE_KEY"// Your could create tradebot by your own Wallet private key
+```
+
+## Change strategy
+
+Create your own strategy in the `src/strategies/strategy` directory and modify `.env` file. You can use the `autoArima` strategy as an example.
+
+```typescript
+import * as ARIMA from 'arima';
+
+export function suggestion(data: {
+  currentPrice: number;
+  priceArray: number[];
+  spreadFee: number;
+  holdingStatus: string;
+}) {
+  let suggestion = 'WAIT';
+  const arima = new ARIMA('auto');
+  arima.train(data.priceArray);
+  // const AbsspreadFee = Math.abs(data.spreadFee);
+  const arimaPredict = arima.predict(15);
+  const predict: number[] = arimaPredict[0];
+  // const predictProfit = AbsspreadFee * 2.8;
+  const currentPrice = data.currentPrice;
+  if (predict[predict.length - 1] > currentPrice) {
+    suggestion = 'BUY';
+  }
+  if (predict[predict.length - 1] < currentPrice) {
+    suggestion = 'SELL';
+  }
+  if (suggestion === 'WAIT') {
+    return suggestion;
+  }
+  if (data.holdingStatus === 'WAIT') {
+    return suggestion;
+  }
+  if (suggestion !== data.holdingStatus) {
+    return 'CLOSE';
+  }
+  return 'WAIT';
+}
+
+export function takeProfit(data: {
+  openPrice: number;
+  currentPrice: number;
+  spreadFee: number;
+  holdingStatus: string;
+}) {
+  const AbsSpreadFee = Math.abs(data.spreadFee);
+  const openPrice = data.openPrice;
+  const currentPrice = data.currentPrice;
+  const takeProfit = AbsSpreadFee * 1.5;
+  const holdingStatus = data.holdingStatus;
+  if (holdingStatus === 'BUY') {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Buy price
+    if (currentPrice - AbsSpreadFee - openPrice > takeProfit) {
+      return 'CLOSE';
+    }
+  }
+  if (holdingStatus === 'SELL') {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Sell price
+    if (openPrice - (currentPrice + AbsSpreadFee) > takeProfit) {
+      return 'CLOSE';
+    }
+  }
+  return 'WAIT';
+}
+export function stopLoss(data: {
+  openPrice: number;
+  currentPrice: number;
+  spreadFee: number;
+  holdingStatus: string;
+}) {
+  const AbsSpreadFee = Math.abs(data.spreadFee);
+  const openPrice = data.openPrice;
+  const currentPrice = data.currentPrice;
+  const stopLoss = AbsSpreadFee * 0.7;
+  const holdingStatus = data.holdingStatus;
+  if (holdingStatus === 'BUY') {
+    // Info: (20240328 - Jacky) Current Buy price is lower than the open Buy price
+    if (openPrice - (currentPrice + AbsSpreadFee) > stopLoss) {
+      return 'CLOSE';
+    }
+  }
+  if (holdingStatus === 'SELL') {
+    // Info: (20240328 - Jacky) Current Sell price is higher than the open Sell price
+    if (currentPrice - AbsSpreadFee - openPrice > stopLoss) {
+      return 'CLOSE';
+    }
+  }
+  return 'WAIT';
+}
+
+```
+
+> [!WARNING]
+The strategy must have the same functions and parameters as the example above. However, it' free to combine the strategy as long as it's in the same format.
 
 ## Running the app
 
@@ -45,14 +144,118 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## API usage
+
+### Create Tradebot
+
+#### Request URL
+
+```typescript
+POST /tradebot
+```
+
+### Get All Tradebot
+
+#### Request URL
+
+```typescript
+GET /tradebot
+```
+
+### Get Tradebot by ID
+
+#### Request URL
+
+```typescript
+GET /tradebot
+```
+
+Parameters
+| name      | type    | required | default |
+| --------  | ------- | -------- | ------- |
+| id  | string(UUID) | true | null |
+
+#### Request Example
+
+```typescript
+
+GET /tradebot?id=tradebotId
+
+```
+
+### Update Tradebot
+
+Request URL
+
+```typescript
+PUT /tradebot
+```
+
+Parameters
+| name      | type    | required | default |
+| --------  | ------- | -------- | ------- |
+| id  | string(UUID) | true | null |
+
+### body
+
+| name          | type          | required | default |
+| ------------- | ------------- | -------- | ------- |
+| suggestion    | string        | false    | null    |
+| stopLoss      | string        | false    | null    |
+| takeProfit    | string        | false    | null    |
+
+### Request Example
+
+```typescript
+
+PUT /tradebot?id=tradebotId
+
+
+```
+
+```json
+"body": {
+  "suggestion": "string",
+  "tradeStrategy": "string",
+  "stopLoss": "string",
+  "takeProfit": "string",
+}
+```
+
+### Command Tradebot
+
+Request URL
+
+```typescript
+POST /tradebot/tradebotId
+```
+
+### body
+
+| name      | type    | required | default |description |
+| --------  | ------- | -------- | ------- | ----- |
+| command   | string  | true    | null    | "run" or "stop" or "deposit or aiTrade" |
+
+### Request Example
+
+```typescript
+
+POST /tradebot/tradebotId
+
+
+```
+
+```json
+"body": {
+  "command": "run",
+}
+```
+
 ## Test
 
 ```bash
 # unit tests
 $ npm run test
-
-# e2e tests
-$ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
@@ -61,12 +264,6 @@ $ npm run test:cov
 ## Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 

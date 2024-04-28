@@ -1,0 +1,55 @@
+import { Injectable } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { myAsset } from './dto/myAsset.dto';
+import { HistoryList } from './dto/history.dto';
+import { DOMAIN_BACKEND } from '../common/constants/config';
+
+@Injectable()
+export class UserService {
+  private readonly TBDBackendUrl: string;
+  constructor(private readonly httpService: HttpService) {}
+
+  async registerUser(address: string, dewt: string): Promise<any> {
+    const { data } = await firstValueFrom(
+      this.httpService.post(
+        DOMAIN_BACKEND + '/dewt',
+        { address: address, deWT: dewt },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
+  }
+  async getMyAsset(dewt: string): Promise<myAsset> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<myAsset>(DOMAIN_BACKEND + '/users/assets', {
+        headers: {
+          'Content-Type': 'application/json',
+          Dewt: dewt,
+        },
+      }),
+    );
+    return data;
+  }
+  async listHistories(dewt: string, limit: string = '3'): Promise<HistoryList> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<HistoryList>(
+        DOMAIN_BACKEND + '/bolt-transactions/history?limit=' + limit,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Dewt: dewt,
+          },
+        },
+      ),
+    );
+    return data;
+  }
+  async sendToken() {}
+  async receiveToken() {}
+}
